@@ -3,7 +3,7 @@
  */
 
 const SHEET_URL =
-    "https://docs.google.com/spreadsheets/d/1GrLXvVH_xEsbUadDLo_dSlFkYdj6GTeXyRfdyy3-CGU/export?format=csv";
+    "https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
 
 
 const gameTitle =
