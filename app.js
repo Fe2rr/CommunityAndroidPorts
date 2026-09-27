@@ -787,4 +787,3 @@ searchGames
 Start loading the games.
 */
 loadGames();
-asi?
