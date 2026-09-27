@@ -1,12 +1,10 @@
 /*
- * URL DE TU GOOGLE SHEET
+ * GOOGLE SHEETS
  *
- * Primero publica tu Google Sheet en formato CSV.
+ * Esta es tu hoja de Google Sheets.
  *
- * Ejemplo:
- * https://docs.google.com/spreadsheets/d/ID/export?format=csv&gid=ID_DE_LA_HOJA
- *
- * Reemplaza la URL de abajo por la tuya.
+ * No hace falta modificarla ni quitar las
+ * celdas combinadas.
  */
 
 const SHEET_URL =
@@ -21,103 +19,219 @@ let games = [];
 
 
 /*
- * Convierte una línea CSV en columnas.
- *
- * Esto permite manejar correctamente campos
- * que contienen comas entre comillas.
+ * Normaliza nombres de columnas.
  */
-function parseCSVLine(line) {
+function normalizeHeader(value) {
 
-    const result = [];
-    let current = "";
-    let insideQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-
-        const char = line[i];
-
-        if (char === '"') {
-
-            if (insideQuotes && line[i + 1] === '"') {
-                current += '"';
-                i++;
-            } else {
-                insideQuotes = !insideQuotes;
-            }
-
-        } else if (char === "," && !insideQuotes) {
-
-            result.push(current);
-            current = "";
-
-        } else {
-
-            current += char;
-        }
-    }
-
-    result.push(current);
-
-    return result;
+    return value
+        .replace(/^\uFEFF/, "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 
 /*
- * Convierte el CSV completo en objetos.
+ * Normaliza texto para comparar juegos.
+ */
+function normalizeText(value) {
+
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
+}
+
+
+/*
+ * Convierte el nombre del juego en un identificador
+ * que podemos utilizar en la URL.
+ *
+ * Ejemplo:
+ *
+ * The Legend of Zelda: A Link to the Past
+ *
+ * ↓
+ *
+ * the-legend-of-zelda-a-link-to-the-past
+ */
+function createSlug(name) {
+
+    return normalizeText(name)
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
+}
+
+
+/*
+ * Parser CSV completo.
+ *
+ * A diferencia del parser anterior, este puede
+ * manejar correctamente:
+ *
+ * - comas dentro de campos
+ * - comillas
+ * - saltos de línea dentro de campos
  */
 function parseCSV(csv) {
 
-    const lines = csv
-        .replace(/\r/g, "")
-        .split("\n")
-        .filter(line => line.trim() !== "");
+    const rows = [];
 
-    if (lines.length < 2) {
+    let row = [];
+    let field = "";
+    let insideQuotes = false;
+
+    for (let i = 0; i < csv.length; i++) {
+
+        const char = csv[i];
+
+        /*
+         * Comillas
+         */
+        if (char === '"') {
+
+            if (insideQuotes && csv[i + 1] === '"') {
+
+                field += '"';
+                i++;
+
+            } else {
+
+                insideQuotes = !insideQuotes;
+            }
+
+            continue;
+        }
+
+
+        /*
+         * Coma fuera de comillas
+         */
+        if (char === "," && !insideQuotes) {
+
+            row.push(field);
+            field = "";
+
+            continue;
+        }
+
+
+        /*
+         * Fin de fila
+         */
+        if (
+            (char === "\n" || char === "\r") &&
+            !insideQuotes
+        ) {
+
+            /*
+             * Manejar CRLF
+             */
+            if (
+                char === "\r" &&
+                csv[i + 1] === "\n"
+            ) {
+                i++;
+            }
+
+            row.push(field);
+            field = "";
+
+            /*
+             * Evitar filas completamente vacías.
+             */
+            if (
+                row.some(
+                    value => value.trim() !== ""
+                )
+            ) {
+                rows.push(row);
+            }
+
+            row = [];
+
+            continue;
+        }
+
+
+        field += char;
+    }
+
+
+    /*
+     * Último campo.
+     */
+    if (
+        field.length > 0 ||
+        row.length > 0
+    ) {
+
+        row.push(field);
+
+        if (
+            row.some(
+                value => value.trim() !== ""
+            )
+        ) {
+            rows.push(row);
+        }
+    }
+
+
+    if (rows.length === 0) {
         return [];
     }
 
-    const headers = parseCSVLine(lines[0]).map(header =>
-        header
-            .trim()
-            .replace(/^"|"$/g, "")
-            .toUpperCase()
+
+    /*
+     * Primera fila = encabezados.
+     */
+    const headers = rows.shift().map(
+        normalizeHeader
     );
 
-    const result = [];
 
-    for (let i = 1; i < lines.length; i++) {
+    /*
+     * Convertir las filas en objetos.
+     */
+    return rows.map(values => {
 
-        const values = parseCSVLine(lines[i]);
+        const rowObject = {};
 
-        const row = {};
+        headers.forEach(
+            (header, index) => {
 
-        headers.forEach((header, index) => {
-            row[header] = (values[index] || "")
-                .trim()
-                .replace(/^"|"$/g, "");
-        });
+                rowObject[header] =
+                    (values[index] || "").trim();
 
-        result.push(row);
-    }
+            }
+        );
 
-    return result;
+        return rowObject;
+    });
 }
 
 
 /*
- * Busca una columna independientemente de
- * cómo esté escrita.
+ * Busca una columna.
  */
 function getColumn(row, possibleNames) {
 
     for (const name of possibleNames) {
 
-        const key = Object.keys(row).find(
-            key => key.toUpperCase() === name.toUpperCase()
-        );
+        const normalizedName =
+            normalizeHeader(name);
 
-        if (key) {
-            return row[key];
+        if (
+            Object.prototype.hasOwnProperty.call(
+                row,
+                normalizedName
+            )
+        ) {
+
+            return row[normalizedName];
         }
     }
 
@@ -126,90 +240,259 @@ function getColumn(row, possibleNames) {
 
 
 /*
- * Convierte una fila de Google Sheets
- * en un juego.
+ * Convierte las filas del CSV.
+ *
+ * IMPORTANTE:
+ *
+ * GAME y YEAR pueden estar combinados
+ * en Google Sheets.
+ *
+ * Cuando una fila no tiene GAME,
+ * heredamos el juego de la fila anterior.
+ *
+ * NO hacemos esto con NEEDS GAME FILES?,
+ * PROJECT, DEVELOPER, etc.
  */
-function convertRow(row) {
+function processRows(rows) {
 
-    return {
+    let currentGame = "";
+    let currentYear = "";
 
-        name: getColumn(row, [
-            "GAME",
-            "GAME NAME",
-            "NAME",
-            "JUEGO"
-        ]),
+    const result = [];
 
-        year: getColumn(row, [
-            "YEAR",
-            "AÑO"
-        ]),
 
-        project: getColumn(row, [
-            "PROJECT",
-            "PROYECTO"
-        ]),
+    for (const row of rows) {
 
-        link: getColumn(row, [
-            "LINK",
-            "URL",
-            "PROJECT LINK",
-            "ENLACE"
-        ]),
+        const gameValue =
+            getColumn(row, [
+                "GAME",
+                "GAME NAME",
+                "NAME",
+                "JUEGO"
+            ]).trim();
 
-        developer: getColumn(row, [
-            "DEVELOPER",
-            "DEVELOPER/PUBLISHER",
-            "DESARROLLADOR"
-        ]),
 
-        controller: getColumn(row, [
-            "CONTROLLER SUPPORT",
-            "CONTROLLER",
-            "GAMEPAD",
-            "MANDO"
-        ]),
+        const yearValue =
+            getColumn(row, [
+                "YEAR",
+                "ANO",
+                "AÑO"
+            ]).trim();
 
-        files: getColumn(row, [
-            "NEEDS GAME FILES?",
-            "NEEDS GAME FILES",
-            "GAME FILES",
-            "NECESITA ARCHIVOS"
-        ]),
 
-        works: getColumn(row, [
-            "WORKS?",
-            "WORKS",
-            "FUNCIONA"
-        ]),
+        /*
+         * Si encontramos un nuevo juego,
+         * actualizamos el juego actual.
+         */
+        if (gameValue) {
+            currentGame = gameValue;
+        }
 
-        version: getColumn(row, [
-            "VERSION",
-            "VERSIÓN"
-        ]),
 
-        lastUpdate: getColumn(row, [
-            "LAST UPDATE",
-            "LAST UPDATED",
-            "ÚLTIMA ACTUALIZACIÓN"
-        ]),
+        /*
+         * Lo mismo con el año.
+         */
+        if (yearValue) {
+            currentYear = yearValue;
+        }
 
-        notes: getColumn(row, [
-            "NOTES",
-            "NOTE",
-            "NOTAS"
-        ])
 
-    };
+        /*
+         * Datos específicos del port.
+         */
+        const project =
+            getColumn(row, [
+                "PROJECT",
+                "PROYECTO"
+            ]);
+
+
+        const link =
+            getColumn(row, [
+                "LINK",
+                "URL",
+                "PROJECT LINK",
+                "ENLACE"
+            ]);
+
+
+        const developer =
+            getColumn(row, [
+                "DEVELOPER",
+                "DEVELOPER/PUBLISHER",
+                "DESARROLLADOR"
+            ]);
+
+
+        const version =
+            getColumn(row, [
+                "VERSION",
+                "VERSIÓN"
+            ]);
+
+
+        const controller =
+            getColumn(row, [
+                "CONTROLLER SUPPORT",
+                "CONTROLLER",
+                "GAMEPAD",
+                "MANDO"
+            ]);
+
+
+        const files =
+            getColumn(row, [
+                "NEEDS GAME FILES?",
+                "NEEDS GAME FILES",
+                "GAME FILES",
+                "NECESITA ARCHIVOS"
+            ]);
+
+
+        const works =
+            getColumn(row, [
+                "WORKS?",
+                "WORKS",
+                "FUNCIONA"
+            ]);
+
+
+        const lastUpdate =
+            getColumn(row, [
+                "LAST UPDATE",
+                "LAST UPDATED",
+                "ÚLTIMA ACTUALIZACIÓN"
+            ]);
+
+
+        const notes =
+            getColumn(row, [
+                "NOTES",
+                "NOTE",
+                "NOTAS"
+            ]);
+
+
+        /*
+         * Una fila se considera port cuando tiene
+         * algún dato propio del proyecto.
+         *
+         * Esto evita que categorías o filas vacías
+         * aparezcan como juegos.
+         */
+        const hasPortData =
+            project ||
+            link ||
+            developer ||
+            version ||
+            controller ||
+            files ||
+            works ||
+            lastUpdate ||
+            notes;
+
+
+        if (
+            !currentGame ||
+            !hasPortData
+        ) {
+            continue;
+        }
+
+
+        result.push({
+
+            game: currentGame,
+
+            year: currentYear,
+
+            project: project.trim(),
+
+            link: link.trim(),
+
+            developer: developer.trim(),
+
+            version: version.trim(),
+
+            controller: controller.trim(),
+
+            files: files.trim(),
+
+            works: works.trim(),
+
+            lastUpdate: lastUpdate.trim(),
+
+            notes: notes.trim()
+
+        });
+    }
+
+
+    return result;
 }
 
 
 /*
- * Muestra los juegos en pantalla.
+ * Agrupa los ports por juego.
+ */
+function groupGames(rows) {
+
+    const grouped = new Map();
+
+
+    for (const port of rows) {
+
+        const key =
+            normalizeText(port.game);
+
+
+        if (!grouped.has(key)) {
+
+            grouped.set(
+                key,
+                {
+                    name: port.game,
+                    year: port.year,
+                    slug: createSlug(port.game),
+                    ports: []
+                }
+            );
+        }
+
+
+        const game =
+            grouped.get(key);
+
+
+        /*
+         * Si encontramos un año que antes
+         * no teníamos, lo guardamos.
+         */
+        if (
+            !game.year &&
+            port.year
+        ) {
+            game.year = port.year;
+        }
+
+
+        game.ports.push(port);
+    }
+
+
+    return Array.from(
+        grouped.values()
+    );
+}
+
+
+/*
+ * Muestra los juegos.
  */
 function displayGames(list) {
 
     gameList.innerHTML = "";
+
 
     if (list.length === 0) {
 
@@ -219,7 +502,8 @@ function displayGames(list) {
             </div>
         `;
 
-        statusElement.textContent = "0 juegos";
+        statusElement.textContent =
+            "0 juegos";
 
         return;
     }
@@ -229,94 +513,84 @@ function displayGames(list) {
         `${list.length} juego${list.length !== 1 ? "s" : ""}`;
 
 
-    const fragment = document.createDocumentFragment();
+    const fragment =
+        document.createDocumentFragment();
 
 
-    list.forEach(game => {
+    for (const game of list) {
 
-        const element = document.createElement("a");
+        /*
+         * Cada juego apunta a:
+         *
+         * game.html?game=slug
+         */
+        const element =
+            document.createElement("a");
 
-        element.className = "game";
+
+        element.className =
+            "game";
+
+
+        element.href =
+            `game.html?game=${encodeURIComponent(game.slug)}`;
+
+
+        const name =
+            document.createElement("h2");
+
+
+        name.className =
+            "game-name";
+
+
+        name.textContent =
+            game.name;
+
+
+        const info =
+            document.createElement("div");
+
+
+        info.className =
+            "game-info";
 
 
         /*
-         * Si existe un enlace al proyecto,
-         * la tarjeta se convierte en un enlace.
+         * Año
          */
-        if (game.link) {
-
-            element.href = game.link;
-            element.target = "_blank";
-            element.rel = "noopener noreferrer";
-
-        } else {
-
-            element.href = "javascript:void(0)";
-
-        }
-
-
-        const name = document.createElement("h2");
-
-        name.className = "game-name";
-
-        name.textContent =
-            game.name || "Juego sin nombre";
-
-
-        const info = document.createElement("div");
-
-        info.className = "game-info";
-
-
         if (game.year) {
 
-            const span = document.createElement("span");
+            const span =
+                document.createElement("span");
 
-            span.textContent = game.year;
-
-            info.appendChild(span);
-        }
-
-
-        if (game.project) {
-
-            const span = document.createElement("span");
-
-            span.className = "game-project";
-
-            span.textContent = game.project;
+            span.textContent =
+                game.year;
 
             info.appendChild(span);
         }
 
 
-        if (game.developer) {
-
-            const span = document.createElement("span");
-
-            span.textContent = game.developer;
-
-            info.appendChild(span);
-        }
+        /*
+         * Cantidad de ports
+         */
+        const portCount =
+            document.createElement("span");
 
 
-        if (game.version) {
+        portCount.textContent =
+            `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
 
-            const span = document.createElement("span");
 
-            span.textContent = `v${game.version}`;
-
-            info.appendChild(span);
-        }
+        info.appendChild(portCount);
 
 
         element.appendChild(name);
         element.appendChild(info);
 
-        fragment.appendChild(element);
 
-    });
+        fragment.appendChild(element);
+    }
 
 
     gameList.appendChild(fragment);
@@ -324,14 +598,12 @@ function displayGames(list) {
 
 
 /*
- * Busca juegos.
+ * Búsqueda.
  */
 function searchGames() {
 
     const query =
-        searchInput.value
-            .toLowerCase()
-            .trim();
+        normalizeText(searchInput.value);
 
 
     if (!query) {
@@ -342,28 +614,30 @@ function searchGames() {
     }
 
 
-    const filtered = games.filter(game => {
+    const filtered =
+        games.filter(game => {
 
-        const searchableText = [
+            const searchableText = [
 
-            game.name,
-            game.year,
-            game.project,
-            game.developer,
-            game.controller,
-            game.files,
-            game.works,
-            game.version,
-            game.notes
+                game.name,
+                game.year,
 
-        ]
-            .join(" ")
-            .toLowerCase();
+                ...game.ports.map(port => [
+                    port.project,
+                    port.developer,
+                    port.version,
+                    port.notes
+                ].join(" "))
+
+            ]
+                .join(" ")
+                .toLowerCase();
 
 
-        return searchableText.includes(query);
-
-    });
+            return normalizeText(
+                searchableText
+            ).includes(query);
+        });
 
 
     displayGames(filtered);
@@ -371,23 +645,11 @@ function searchGames() {
 
 
 /*
- * Carga los datos desde Google Sheets.
+ * Carga Google Sheets.
  */
 async function loadGames() {
 
     try {
-
-        if (
-            !SHEET_URL ||
-            SHEET_URL ===
-            "PEGAR_AQUI_LA_URL_CSV_DE_TU_GOOGLE_SHEET"
-        ) {
-
-            throw new Error(
-                "Todavía no configuraste la URL de Google Sheets."
-            );
-        }
-
 
         statusElement.textContent =
             "Cargando juegos...";
@@ -413,23 +675,34 @@ async function loadGames() {
             parseCSV(csv);
 
 
+        if (rows.length === 0) {
+
+            throw new Error(
+                "La hoja no contiene datos."
+            );
+        }
+
+
+        const processedRows =
+            processRows(rows);
+
+
         games =
-            rows
-                .map(convertRow)
-                .filter(game => game.name);
+            groupGames(processedRows);
 
 
         /*
          * Orden alfabético.
          */
-        games.sort((a, b) =>
-            a.name.localeCompare(
-                b.name,
-                "es",
-                {
-                    sensitivity: "base"
-                }
-            )
+        games.sort(
+            (a, b) =>
+                a.name.localeCompare(
+                    b.name,
+                    "es",
+                    {
+                        sensitivity: "base"
+                    }
+                )
         );
 
 
@@ -441,14 +714,21 @@ async function loadGames() {
         console.error(error);
 
 
-        statusElement.textContent = "";
+        statusElement.textContent =
+            "";
 
 
         gameList.innerHTML = `
             <div class="error">
-                <strong>No se pudieron cargar los juegos.</strong>
+
+                <strong>
+                    No se pudieron cargar los juegos.
+                </strong>
+
                 <br><br>
+
                 ${error.message}
+
             </div>
         `;
     }
