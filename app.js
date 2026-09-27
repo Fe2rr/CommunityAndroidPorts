@@ -773,17 +773,15 @@ console.error(
 }
 }
 /*
-
-Search events.
-*/
+ * Search events.
+ */
 searchInput.addEventListener(
-"input",
-searchGames
+    "input",
+    searchGames
 );
 
 
 /*
-
-Start loading the games.
-*/
+ * Start loading the games.
+ */
 loadGames();
