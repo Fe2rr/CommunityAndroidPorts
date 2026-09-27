@@ -74,6 +74,9 @@ function parseCSV(csv) {
         const char = csv[i];
 
 
+        /*
+         * Quotes.
+         */
         if (char === '"') {
 
             if (
@@ -94,6 +97,9 @@ function parseCSV(csv) {
         }
 
 
+        /*
+         * Comma outside quotes.
+         */
         if (
             char === "," &&
             !insideQuotes
@@ -106,6 +112,9 @@ function parseCSV(csv) {
         }
 
 
+        /*
+         * End of row.
+         */
         if (
             (char === "\n" || char === "\r") &&
             !insideQuotes
@@ -144,12 +153,16 @@ function parseCSV(csv) {
     }
 
 
+    /*
+     * Last field.
+     */
     if (
         field.length > 0 ||
         row.length > 0
     ) {
 
         row.push(field);
+
 
         if (
             row.some(
@@ -168,12 +181,18 @@ function parseCSV(csv) {
     }
 
 
+    /*
+     * First row = headers.
+     */
     const headers =
         rows.shift().map(
             normalizeHeader
         );
 
 
+    /*
+     * Convert rows into objects.
+     */
     return rows.map(values => {
 
         const rowObject = {};
@@ -222,9 +241,12 @@ function getColumn(row, possibleNames) {
 
 
 /*
- * Process rows and keep the current game
- * when Google Sheets leaves GAME empty
- * because of merged cells.
+ * Process rows.
+ *
+ * GAME and YEAR can be merged in Google Sheets.
+ *
+ * If GAME is empty, the game from the
+ * previous row is inherited.
  */
 function processRows(rows) {
 
@@ -253,16 +275,25 @@ function processRows(rows) {
             ]).trim();
 
 
+        /*
+         * Update current game.
+         */
         if (gameValue) {
             currentGame = gameValue;
         }
 
 
+        /*
+         * Update current year.
+         */
         if (yearValue) {
             currentYear = yearValue;
         }
 
 
+        /*
+         * Project name.
+         */
         const project =
             getColumn(row, [
                 "PROJECT",
@@ -282,7 +313,7 @@ function processRows(rows) {
 
 
         /*
-         * URL = actual destination of the button.
+         * URL = actual destination.
          */
         const url =
             getColumn(row, [
@@ -347,6 +378,10 @@ function processRows(rows) {
             ]);
 
 
+        /*
+         * Determine whether this row contains
+         * port information.
+         */
         const hasPortData =
             project ||
             link ||
@@ -360,10 +395,6 @@ function processRows(rows) {
             notes;
 
 
-        /*
-         * Ignore rows that do not appear
-         * to correspond to a port.
-         */
         if (
             !currentGame ||
             !hasPortData
@@ -409,10 +440,6 @@ function processRows(rows) {
 
 /*
  * Get the requested game from the URL.
- *
- * Example:
- *
- * game.html?game=zelda
  */
 function getRequestedGame() {
 
@@ -427,7 +454,7 @@ function getRequestedGame() {
 
 
 /*
- * Display a value as a row.
+ * Display an information row.
  */
 function createInfoRow(
     label,
@@ -480,7 +507,7 @@ function createInfoRow(
 
 
 /*
- * Display all ports.
+ * Display the selected game.
  */
 function displayGame(game) {
 
@@ -488,16 +515,8 @@ function displayGame(game) {
         game.name;
 
 
-    if (game.year) {
-
-        gameYear.textContent =
-            game.year;
-
-    } else {
-
-        gameYear.textContent =
-            "";
-    }
+    gameYear.textContent =
+        game.year || "";
 
 
     statusElement.textContent =
@@ -545,7 +564,7 @@ function displayGame(game) {
 
 
         /*
-         * Information.
+         * Port information.
          */
         const info =
             document.createElement("div");
@@ -572,7 +591,10 @@ function displayGame(game) {
         ];
 
 
-        for (const [label, value] of fields) {
+        for (
+            const [label, value]
+            of fields
+        ) {
 
             const row =
                 createInfoRow(
@@ -628,10 +650,10 @@ function displayGame(game) {
 
 
         /*
-         * Link to the port.
+         * Port link.
          *
-         * LINK = visible button text.
-         * URL = actual destination.
+         * LINK = button text.
+         * URL = destination.
          */
         if (port.url) {
 
@@ -656,7 +678,8 @@ function displayGame(game) {
 
 
             link.textContent =
-                port.link || "Open Port →";
+                port.link ||
+                "Open Port →";
 
 
             card.appendChild(link);
@@ -669,7 +692,7 @@ function displayGame(game) {
 
 
 /*
- * Load the game.
+ * Load the selected game.
  */
 async function loadGame() {
 
@@ -679,6 +702,9 @@ async function loadGame() {
             getRequestedGame();
 
 
+        /*
+         * Make sure a game was specified.
+         */
         if (!requestedGame) {
 
             throw new Error(
@@ -691,8 +717,39 @@ async function loadGame() {
             "Loading ports...";
 
 
-        const response =
-            await fetch(SHEET_URL);
+        /*
+         * Abort the request if Google Sheets
+         * does not respond within 15 seconds.
+         */
+        const controller =
+            new AbortController();
+
+
+        const timeout =
+            setTimeout(
+                () => controller.abort(),
+                15000
+            );
+
+
+        let response;
+
+
+        try {
+
+            response =
+                await fetch(
+                    SHEET_URL,
+                    {
+                        signal:
+                            controller.signal
+                    }
+                );
+
+        } finally {
+
+            clearTimeout(timeout);
+        }
 
 
         if (!response.ok) {
@@ -703,16 +760,54 @@ async function loadGame() {
         }
 
 
+        /*
+         * Read CSV.
+         */
         const csv =
             await response.text();
 
 
+        if (
+            !csv ||
+            !csv.trim()
+        ) {
+
+            throw new Error(
+                "Google Sheets returned an empty response."
+            );
+        }
+
+
+        /*
+         * Parse CSV.
+         */
         const rows =
             parseCSV(csv);
 
 
+        if (rows.length === 0) {
+
+            throw new Error(
+                "The Google Sheet contains no data."
+            );
+        }
+
+
+        /*
+         * Process ports.
+         */
         const processedRows =
             processRows(rows);
+
+
+        if (
+            processedRows.length === 0
+        ) {
+
+            throw new Error(
+                "No ports were found in the Google Sheet."
+            );
+        }
 
 
         /*
@@ -726,35 +821,52 @@ async function loadGame() {
             );
 
 
-        if (matchingRows.length === 0) {
+        if (
+            matchingRows.length === 0
+        ) {
 
             throw new Error(
-                "This game was not found in Google Sheets."
+                `Game not found: ${requestedGame}`
             );
         }
 
 
+        /*
+         * Build game object.
+         */
         const game = {
 
-            name: matchingRows[0].game,
+            name:
+                matchingRows[0].game,
 
-            year: matchingRows[0].year,
+            year:
+                matchingRows[0].year,
 
-            ports: matchingRows
+            ports:
+                matchingRows
 
         };
 
 
+        /*
+         * Update browser title.
+         */
         document.title =
             `${game.name} - Community Android Ports`;
 
 
+        /*
+         * Display game.
+         */
         displayGame(game);
 
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Could not load game:",
+            error
+        );
 
 
         gameTitle.textContent =
@@ -769,6 +881,22 @@ async function loadGame() {
             "";
 
 
+        let message =
+            error.message;
+
+
+        /*
+         * Special message for a timeout.
+         */
+        if (
+            error.name === "AbortError"
+        ) {
+
+            message =
+                "Google Sheets did not respond within 15 seconds.";
+        }
+
+
         portList.innerHTML = `
             <div class="error">
 
@@ -778,7 +906,7 @@ async function loadGame() {
 
                 <br><br>
 
-                ${error.message}
+                ${message}
 
             </div>
         `;
