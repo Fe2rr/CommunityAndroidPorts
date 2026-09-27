@@ -1,10 +1,10 @@
 /*
  * GOOGLE SHEETS
  *
- * Esta es tu hoja de Google Sheets.
+ * This is your Google Sheets file.
  *
- * No hace falta modificarla ni quitar las
- * celdas combinadas.
+ * There is no need to modify or remove
+ * merged cells.
  */
 
 const SHEET_URL =
@@ -19,7 +19,7 @@ let games = [];
 
 
 /*
- * Normaliza nombres de columnas.
+ * Normalize column names.
  */
 function normalizeHeader(value) {
 
@@ -33,7 +33,7 @@ function normalizeHeader(value) {
 
 
 /*
- * Normaliza texto para comparar juegos.
+ * Normalize text for game comparison.
  */
 function normalizeText(value) {
 
@@ -46,10 +46,10 @@ function normalizeText(value) {
 
 
 /*
- * Convierte el nombre del juego en un identificador
- * que podemos utilizar en la URL.
+ * Convert the game name into an identifier
+ * that can be used in the URL.
  *
- * Ejemplo:
+ * Example:
  *
  * The Legend of Zelda: A Link to the Past
  *
@@ -66,14 +66,13 @@ function createSlug(name) {
 
 
 /*
- * Parser CSV completo.
+ * Full CSV parser.
  *
- * A diferencia del parser anterior, este puede
- * manejar correctamente:
+ * Handles:
  *
- * - comas dentro de campos
- * - comillas
- * - saltos de línea dentro de campos
+ * - commas inside fields
+ * - quotes
+ * - line breaks inside fields
  */
 function parseCSV(csv) {
 
@@ -88,7 +87,7 @@ function parseCSV(csv) {
         const char = csv[i];
 
         /*
-         * Comillas
+         * Quotes
          */
         if (char === '"') {
 
@@ -107,7 +106,7 @@ function parseCSV(csv) {
 
 
         /*
-         * Coma fuera de comillas
+         * Comma outside quotes
          */
         if (char === "," && !insideQuotes) {
 
@@ -119,7 +118,7 @@ function parseCSV(csv) {
 
 
         /*
-         * Fin de fila
+         * End of row
          */
         if (
             (char === "\n" || char === "\r") &&
@@ -127,7 +126,7 @@ function parseCSV(csv) {
         ) {
 
             /*
-             * Manejar CRLF
+             * Handle CRLF
              */
             if (
                 char === "\r" &&
@@ -140,7 +139,7 @@ function parseCSV(csv) {
             field = "";
 
             /*
-             * Evitar filas completamente vacías.
+             * Avoid completely empty rows.
              */
             if (
                 row.some(
@@ -161,7 +160,7 @@ function parseCSV(csv) {
 
 
     /*
-     * Último campo.
+     * Last field.
      */
     if (
         field.length > 0 ||
@@ -186,7 +185,7 @@ function parseCSV(csv) {
 
 
     /*
-     * Primera fila = encabezados.
+     * First row = headers.
      */
     const headers = rows.shift().map(
         normalizeHeader
@@ -194,7 +193,7 @@ function parseCSV(csv) {
 
 
     /*
-     * Convertir las filas en objetos.
+     * Convert rows into objects.
      */
     return rows.map(values => {
 
@@ -215,7 +214,7 @@ function parseCSV(csv) {
 
 
 /*
- * Busca una columna.
+ * Find a column.
  */
 function getColumn(row, possibleNames) {
 
@@ -240,18 +239,12 @@ function getColumn(row, possibleNames) {
 
 
 /*
- * Convierte las filas del CSV.
+ * Convert CSV rows.
  *
- * IMPORTANTE:
+ * GAME and YEAR can be merged in Google Sheets.
  *
- * GAME y YEAR pueden estar combinados
- * en Google Sheets.
- *
- * Cuando una fila no tiene GAME,
- * heredamos el juego de la fila anterior.
- *
- * NO hacemos esto con NEEDS GAME FILES?,
- * PROJECT, DEVELOPER, etc.
+ * When a row does not have GAME,
+ * the game from the previous row is inherited.
  */
 function processRows(rows) {
 
@@ -269,482 +262,4 @@ function processRows(rows) {
                 "GAME NAME",
                 "NAME",
                 "JUEGO"
-            ]).trim();
-
-
-        const yearValue =
-            getColumn(row, [
-                "YEAR",
-                "ANO",
-                "AÑO"
-            ]).trim();
-
-
-        /*
-         * Si encontramos un nuevo juego,
-         * actualizamos el juego actual.
-         */
-        if (gameValue) {
-            currentGame = gameValue;
-        }
-
-
-        /*
-         * Lo mismo con el año.
-         */
-        if (yearValue) {
-            currentYear = yearValue;
-        }
-
-
-        /*
-         * Datos específicos del port.
-         */
-        const project =
-            getColumn(row, [
-                "PROJECT",
-                "PROYECTO"
-            ]);
-
-
-        const link =
-            getColumn(row, [
-                "LINK",
-                "URL",
-                "PROJECT LINK",
-                "ENLACE"
-            ]);
-
-
-        const developer =
-            getColumn(row, [
-                "DEVELOPER",
-                "DEVELOPER/PUBLISHER",
-                "DESARROLLADOR"
-            ]);
-
-
-        const version =
-            getColumn(row, [
-                "VERSION",
-                "VERSIÓN"
-            ]);
-
-
-        const controller =
-            getColumn(row, [
-                "CONTROLLER SUPPORT",
-                "CONTROLLER",
-                "GAMEPAD",
-                "MANDO"
-            ]);
-
-
-        const files =
-            getColumn(row, [
-                "NEEDS GAME FILES?",
-                "NEEDS GAME FILES",
-                "GAME FILES",
-                "NECESITA ARCHIVOS"
-            ]);
-
-
-        const works =
-            getColumn(row, [
-                "WORKS?",
-                "WORKS",
-                "FUNCIONA"
-            ]);
-
-
-        const lastUpdate =
-            getColumn(row, [
-                "LAST UPDATE",
-                "LAST UPDATED",
-                "ÚLTIMA ACTUALIZACIÓN"
-            ]);
-
-
-        const notes =
-            getColumn(row, [
-                "NOTES",
-                "NOTE",
-                "NOTAS"
-            ]);
-
-
-        /*
-         * Una fila se considera port cuando tiene
-         * algún dato propio del proyecto.
-         *
-         * Esto evita que categorías o filas vacías
-         * aparezcan como juegos.
-         */
-        const hasPortData =
-            project ||
-            link ||
-            developer ||
-            version ||
-            controller ||
-            files ||
-            works ||
-            lastUpdate ||
-            notes;
-
-
-        if (
-            !currentGame ||
-            !hasPortData
-        ) {
-            continue;
-        }
-
-
-        result.push({
-
-            game: currentGame,
-
-            year: currentYear,
-
-            project: project.trim(),
-
-            link: link.trim(),
-
-            developer: developer.trim(),
-
-            version: version.trim(),
-
-            controller: controller.trim(),
-
-            files: files.trim(),
-
-            works: works.trim(),
-
-            lastUpdate: lastUpdate.trim(),
-
-            notes: notes.trim()
-
-        });
-    }
-
-
-    return result;
-}
-
-
-/*
- * Agrupa los ports por juego.
- */
-function groupGames(rows) {
-
-    const grouped = new Map();
-
-
-    for (const port of rows) {
-
-        const key =
-            normalizeText(port.game);
-
-
-        if (!grouped.has(key)) {
-
-            grouped.set(
-                key,
-                {
-                    name: port.game,
-                    year: port.year,
-                    slug: createSlug(port.game),
-                    ports: []
-                }
-            );
-        }
-
-
-        const game =
-            grouped.get(key);
-
-
-        /*
-         * Si encontramos un año que antes
-         * no teníamos, lo guardamos.
-         */
-        if (
-            !game.year &&
-            port.year
-        ) {
-            game.year = port.year;
-        }
-
-
-        game.ports.push(port);
-    }
-
-
-    return Array.from(
-        grouped.values()
-    );
-}
-
-
-/*
- * Muestra los juegos.
- */
-function displayGames(list) {
-
-    gameList.innerHTML = "";
-
-
-    if (list.length === 0) {
-
-        gameList.innerHTML = `
-            <div class="no-results">
-                No se encontraron juegos.
-            </div>
-        `;
-
-        statusElement.textContent =
-            "0 juegos";
-
-        return;
-    }
-
-
-    statusElement.textContent =
-        `${list.length} juego${list.length !== 1 ? "s" : ""}`;
-
-
-    const fragment =
-        document.createDocumentFragment();
-
-
-    for (const game of list) {
-
-        /*
-         * Cada juego apunta a:
-         *
-         * game.html?game=slug
-         */
-        const element =
-            document.createElement("a");
-
-
-        element.className =
-            "game";
-
-
-        element.href =
-            `game.html?game=${encodeURIComponent(game.slug)}`;
-
-
-        const name =
-            document.createElement("h2");
-
-
-        name.className =
-            "game-name";
-
-
-        name.textContent =
-            game.name;
-
-
-        const info =
-            document.createElement("div");
-
-
-        info.className =
-            "game-info";
-
-
-        /*
-         * Año
-         */
-        if (game.year) {
-
-            const span =
-                document.createElement("span");
-
-            span.textContent =
-                game.year;
-
-            info.appendChild(span);
-        }
-
-
-        /*
-         * Cantidad de ports
-         */
-        const portCount =
-            document.createElement("span");
-
-
-        portCount.textContent =
-            `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
-
-
-        info.appendChild(portCount);
-
-
-        element.appendChild(name);
-        element.appendChild(info);
-
-
-        fragment.appendChild(element);
-    }
-
-
-    gameList.appendChild(fragment);
-}
-
-
-/*
- * Búsqueda.
- */
-function searchGames() {
-
-    const query =
-        normalizeText(searchInput.value);
-
-
-    if (!query) {
-
-        displayGames(games);
-
-        return;
-    }
-
-
-    const filtered =
-        games.filter(game => {
-
-            const searchableText = [
-
-                game.name,
-                game.year,
-
-                ...game.ports.map(port => [
-                    port.project,
-                    port.developer,
-                    port.version,
-                    port.notes
-                ].join(" "))
-
-            ]
-                .join(" ")
-                .toLowerCase();
-
-
-            return normalizeText(
-                searchableText
-            ).includes(query);
-        });
-
-
-    displayGames(filtered);
-}
-
-
-/*
- * Carga Google Sheets.
- */
-async function loadGames() {
-
-    try {
-
-        statusElement.textContent =
-            "Cargando juegos...";
-
-
-        const response =
-            await fetch(SHEET_URL);
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `Error HTTP ${response.status}`
-            );
-        }
-
-
-        const csv =
-            await response.text();
-
-
-        const rows =
-            parseCSV(csv);
-
-
-        if (rows.length === 0) {
-
-            throw new Error(
-                "La hoja no contiene datos."
-            );
-        }
-
-
-        const processedRows =
-            processRows(rows);
-
-
-        games =
-            groupGames(processedRows);
-
-
-        /*
-         * Orden alfabético.
-         */
-        games.sort(
-            (a, b) =>
-                a.name.localeCompare(
-                    b.name,
-                    "es",
-                    {
-                        sensitivity: "base"
-                    }
-                )
-        );
-
-
-        displayGames(games);
-
-
-    } catch (error) {
-
-        console.error(error);
-
-
-        statusElement.textContent =
-            "";
-
-
-        gameList.innerHTML = `
-            <div class="error">
-
-                <strong>
-                    No se pudieron cargar los juegos.
-                </strong>
-
-                <br><br>
-
-                ${error.message}
-
-            </div>
-        `;
-    }
-}
-
-
-/*
- * Buscar mientras escribimos.
- */
-searchInput.addEventListener(
-    "input",
-    searchGames
-);
-
-
-/*
- * Iniciar.
- */
-loadGames();
+            ]).trim
