@@ -532,7 +532,7 @@ gameList.innerHTML = `
 }
 
 statusElement.textContent =
-${list.length} game${list.length !== 1 ? "s" : ""};
+    `${list.length} game${list.length !== 1 ? "s" : ""}`;
 
 const fragment =
 document.createDocumentFragment();
