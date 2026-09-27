@@ -756,3 +756,16 @@ async function loadGames() {
         `;
     }
 }
+/*
+ * Search events.
+ */
+searchInput.addEventListener(
+    "input",
+    searchGames
+);
+
+
+/*
+ * Start loading the games.
+ */
+loadGames();
