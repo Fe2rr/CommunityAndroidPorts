@@ -10,7 +10,7 @@
  */
 
 const SHEET_URL =
-    "PEGAR_AQUI_LA_URL_CSV_DE_TU_GOOGLE_SHEET";
+    "https://docs.google.com/spreadsheets/d/1GrLXvVH_xEsbUadDLo_dSlFkYdj6GTeXyRfdyy3-CGU/export?format=csv";
 
 
 const gameList = document.getElementById("game-list");
