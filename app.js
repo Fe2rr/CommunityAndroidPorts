@@ -675,6 +675,14 @@ async function loadGames() {
             await response.text();
 
 
+        if (!csv || !csv.trim()) {
+
+            throw new Error(
+                "Google Sheets returned an empty response."
+            );
+        }
+
+
         const rows =
             parseCSV(csv);
 
@@ -689,6 +697,14 @@ async function loadGames() {
 
         const processedRows =
             processRows(rows);
+
+
+        if (processedRows.length === 0) {
+
+            throw new Error(
+                "No games or ports were found in the sheet."
+            );
+        }
 
 
         games =
@@ -715,7 +731,10 @@ async function loadGames() {
 
     } catch (error) {
 
-        console.error(error);
+        console.error(
+            "Could not load games:",
+            error
+        );
 
 
         statusElement.textContent =
@@ -737,18 +756,3 @@ async function loadGames() {
         `;
     }
 }
-
-
-/*
- * Search while typing.
- */
-searchInput.addEventListener(
-    "input",
-    searchGames
-);
-
-
-/*
- * Start.
- */
-loadGames();
