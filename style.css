@@ -1,0 +1,144 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #111111;
+    color: #eeeeee;
+}
+
+header {
+    background: #181818;
+    border-bottom: 1px solid #303030;
+    padding: 30px 20px;
+    text-align: center;
+}
+
+header h1 {
+    margin: 0 0 8px;
+    font-size: 32px;
+}
+
+header p {
+    margin: 0;
+    color: #aaaaaa;
+}
+
+main {
+    width: 100%;
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 25px 20px 40px;
+}
+
+.search-container {
+    margin-bottom: 25px;
+}
+
+#search {
+    width: 100%;
+    padding: 14px 16px;
+
+    background: #1d1d1d;
+    color: #ffffff;
+
+    border: 1px solid #3a3a3a;
+    border-radius: 8px;
+
+    font-size: 16px;
+    outline: none;
+}
+
+#search:focus {
+    border-color: #777777;
+}
+
+#status {
+    margin-bottom: 15px;
+    color: #999999;
+    font-size: 14px;
+}
+
+#game-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.game {
+    display: block;
+
+    padding: 16px 18px;
+
+    background: #1b1b1b;
+    border: 1px solid #2d2d2d;
+    border-radius: 8px;
+
+    text-decoration: none;
+    color: inherit;
+
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.game:hover {
+    background: #222222;
+    border-color: #4a4a4a;
+}
+
+.game-name {
+    margin: 0 0 8px;
+
+    font-size: 19px;
+    font-weight: bold;
+
+    color: #ffffff;
+}
+
+.game-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+
+    color: #999999;
+    font-size: 14px;
+}
+
+.game-info span {
+    display: inline-block;
+}
+
+.game-project {
+    color: #cccccc;
+}
+
+.no-results {
+    padding: 30px;
+    text-align: center;
+
+    color: #888888;
+    background: #181818;
+    border: 1px solid #292929;
+    border-radius: 8px;
+}
+
+.error {
+    padding: 20px;
+
+    color: #ffaaaa;
+    background: #241616;
+    border: 1px solid #512222;
+    border-radius: 8px;
+}
+
+footer {
+    padding: 25px 20px;
+
+    text-align: center;
+
+    color: #666666;
+    font-size: 13px;
+
+    border-top: 1px solid #242424;
+  }
