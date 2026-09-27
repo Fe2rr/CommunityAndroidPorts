@@ -20,7 +20,7 @@ const statusElement =
 
 
 /*
- * Normaliza encabezados.
+ * Normalize headers.
  */
 function normalizeHeader(value) {
 
@@ -34,7 +34,7 @@ function normalizeHeader(value) {
 
 
 /*
- * Normaliza texto.
+ * Normalize text.
  */
 function normalizeText(value) {
 
@@ -47,7 +47,7 @@ function normalizeText(value) {
 
 
 /*
- * Crea el mismo slug utilizado por app.js.
+ * Create the same slug used by app.js.
  */
 function createSlug(name) {
 
@@ -58,7 +58,7 @@ function createSlug(name) {
 
 
 /*
- * Parser CSV.
+ * CSV parser.
  */
 function parseCSV(csv) {
 
@@ -195,7 +195,7 @@ function parseCSV(csv) {
 
 
 /*
- * Busca una columna.
+ * Find a column.
  */
 function getColumn(row, possibleNames) {
 
@@ -222,411 +222,7 @@ function getColumn(row, possibleNames) {
 
 
 /*
- * Procesa las filas y mantiene el juego
- * cuando Google Sheets deja GAME vacío
- * por las celdas combinadas.
- */
-function processRows(rows) {
-
-    let currentGame = "";
-    let currentYear = "";
-
-    const result = [];
-
-
-    for (const row of rows) {
-
-        const gameValue =
-            getColumn(row, [
-                "GAME",
-                "GAME NAME",
-                "NAME",
-                "JUEGO"
-            ]).trim();
-
-
-        const yearValue =
-            getColumn(row, [
-                "YEAR",
-                "ANO",
-                "AÑO"
-            ]).trim();
-
-
-        if (gameValue) {
-            currentGame = gameValue;
-        }
-
-
-        if (yearValue) {
-            currentYear = yearValue;
-        }
-
-
-        const project =
-            getColumn(row, [
-                "PROJECT",
-                "PROYECTO"
-            ]);
-
-
-        const link =
-            getColumn(row, [
-                "LINK",
-                "URL",
-                "PROJECT LINK",
-                "ENLACE"
-            ]);
-
-
-        const developer =
-            getColumn(row, [
-                "DEVELOPER",
-                "DEVELOPER/PUBLISHER",
-                "DESARROLLADOR"
-            ]);
-
-
-        const version =
-            getColumn(row, [
-                "VERSION",
-                "VERSIÓN"
-            ]);
-
-
-        const controller =
-            getColumn(row, [
-                "CONTROLLER SUPPORT",
-                "CONTROLLER",
-                "GAMEPAD",
-                "MANDO"
-            ]);
-
-
-        const files =
-            getColumn(row, [
-                "NEEDS GAME FILES?",
-                "NEEDS GAME FILES",
-                "GAME FILES",
-                "NECESITA ARCHIVOS"
-            ]);
-
-
-        const works =
-            getColumn(row, [
-                "WORKS?",
-                "WORKS",
-                "FUNCIONA"
-            ]);
-
-
-        const lastUpdate =
-            getColumn(row, [
-                "LAST UPDATE",
-                "LAST UPDATED",
-                "ÚLTIMA ACTUALIZACIÓN"
-            ]);
-
-
-        const notes =
-            getColumn(row, [
-                "NOTES",
-                "NOTE",
-                "NOTAS"
-            ]);
-
-
-        const hasPortData =
-            project ||
-            link ||
-            developer ||
-            version ||
-            controller ||
-            files ||
-            works ||
-            lastUpdate ||
-            notes;
-
-
-        /*
-         * Ignorar filas que no parecen
-         * corresponder a un port.
-         */
-        if (
-            !currentGame ||
-            !hasPortData
-        ) {
-
-            continue;
-        }
-
-
-        result.push({
-
-            game: currentGame,
-
-            year: currentYear,
-
-            project: project.trim(),
-
-            link: link.trim(),
-
-            developer: developer.trim(),
-
-            version: version.trim(),
-
-            controller: controller.trim(),
-
-            files: files.trim(),
-
-            works: works.trim(),
-
-            lastUpdate: lastUpdate.trim(),
-
-            notes: notes.trim()
-
-        });
-    }
-
-
-    return result;
-}
-
-
-/*
- * Obtiene el juego solicitado desde la URL.
- *
- * Ejemplo:
- *
- * game.html?game=zelda
- */
-function getRequestedGame() {
-
-    const params =
-        new URLSearchParams(
-            window.location.search
-        );
-
-
-    return params.get("game") || "";
-}
-
-
-/*
- * Muestra un dato como una fila.
- */
-function createInfoRow(
-    label,
-    value
-) {
-
-    if (!value) {
-        return null;
-    }
-
-
-    const row =
-        document.createElement("div");
-
-
-    row.className =
-        "port-info-row";
-
-
-    const labelElement =
-        document.createElement("span");
-
-
-    labelElement.className =
-        "port-info-label";
-
-
-    labelElement.textContent =
-        label;
-
-
-    const valueElement =
-        document.createElement("span");
-
-
-    valueElement.className =
-        "port-info-value";
-
-
-    valueElement.textContent =
-        value;
-
-
-    row.appendChild(labelElement);
-    row.appendChild(valueElement);
-
-
-    return row;
-}
-
-
-/*
- * Muestra todos los ports.
- */
-function displayGame(game) {
-
-    gameTitle.textContent =
-        game.name;
-
-
-    if (game.year) {
-
-        gameYear.textContent =
-            game.year;
-
-    } else {
-
-        gameYear.textContent =
-            "";
-    }
-
-
-    statusElement.textContent =
-        `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
-
-
-    portList.innerHTML = "";
-
-
-    for (
-        let index = 0;
-        index < game.ports.length;
-        index++
-    ) {
-
-        const port =
-            game.ports[index];
-
-
-        const card =
-            document.createElement("div");
-
-
-        card.className =
-            "port";
-
-
-        /*
-         * Título del port.
-         */
-        const title =
-            document.createElement("h2");
-
-
-        title.className =
-            "port-title";
-
-
-        title.textContent =
-            port.project ||
-            `Port ${index + 1}`;
-
-
-        card.appendChild(title);
-
-
-        /*
-         * Información.
-         */
-        const info =
-            document.createElement("div");
-
-
-        info.className =
-            "port-info";
-
-
-        const fields = [
-
-            ["Desarrollador", port.developer],
-
-            ["Versión", port.version],
-
-            ["Soporte de mando", port.controller],
-
-            ["Necesita archivos originales", port.files],
-
-            ["Funciona", port.works],
-
-            ["Última actualización", port.lastUpdate]
-
-        ];
-
-
-        for (const [label, value] of fields) {
-
-            const row =
-                createInfoRow(
-                    label,
-                    value
-                );
-
-
-            if (row) {
-                info.appendChild(row);
-            }
-        }
-
-
-        card.appendChild(info);
-
-
-        /*
-         * Notas.
-         */
-        if (port.notes) {
-
-            const notes =
-                document.createElement("div");
-
-
-            notes.className =
-                "port-notes";
-
-
-            const notesTitle =
-                document.createElement("strong");
-
-
-            notesTitle.textContent =
-                "Notas";
-
-
-            const notesText =
-                document.createElement("p");
-
-
-            notesText.textContent =
-                port.notes;
-
-
-            notes.appendChild(notesTitle);
-            notes.appendChild(notesText);
-
-
-            card.appendChild(notes);
-        }
-
-
-        /*
-         * Botón al proyecto.
-         */
-        if (port.link) {
-
-            const link =
-                document.createElement("a");
-
-
-            link.className =
-                "port-link";
-
-
-            link.href =
+ * Process        link.href =
                 port.link;
 
 
