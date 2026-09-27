@@ -3,17 +3,22 @@
  *
  * This is your Google Sheets file.
  *
- * There is no need to modify or remove
- * merged cells.
+ * Each row should contain its own GAME and YEAR.
  */
 
 const SHEET_URL =
     "https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
 
 
-const gameList = document.getElementById("game-list");
-const searchInput = document.getElementById("search");
-const statusElement = document.getElementById("status");
+const gameList =
+    document.getElementById("game-list");
+
+const searchInput =
+    document.getElementById("search");
+
+const statusElement =
+    document.getElementById("status");
+
 
 let games = [];
 
@@ -33,7 +38,7 @@ function normalizeHeader(value) {
 
 
 /*
- * Normalize text for comparison.
+ * Normalize text for game comparison.
  */
 function normalizeText(value) {
 
@@ -48,6 +53,14 @@ function normalizeText(value) {
 /*
  * Convert the game name into an identifier
  * that can be used in the URL.
+ *
+ * Example:
+ *
+ * The Legend of Zelda: A Link to the Past
+ *
+ * ↓
+ *
+ * the-legend-of-zelda-a-link-to-the-past
  */
 function createSlug(name) {
 
@@ -95,7 +108,8 @@ function parseCSV(csv) {
 
             } else {
 
-                insideQuotes = !insideQuotes;
+                insideQuotes =
+                    !insideQuotes;
             }
 
             continue;
@@ -145,7 +159,8 @@ function parseCSV(csv) {
              */
             if (
                 row.some(
-                    value => value.trim() !== ""
+                    value =>
+                        value.trim() !== ""
                 )
             ) {
 
@@ -176,7 +191,8 @@ function parseCSV(csv) {
 
         if (
             row.some(
-                value => value.trim() !== ""
+                value =>
+                    value.trim() !== ""
             )
         ) {
 
@@ -250,35 +266,18 @@ function getColumn(row, possibleNames) {
 
 
 /*
- * Process CSV rows.
+ * Convert CSV rows.
  *
- * Google Sheets exports merged cells with the value
- * only appearing on the first row of the merged area.
- *
- * Example:
- *
- * GAME                         PROJECT
- * Blake Stone                  Alpha Touch
- * Black Stone Planet Strike
- *
- * The second row has an empty PROJECT field.
- *
- * We therefore keep the previous port data and reuse it
- * for the following game when its port columns are empty.
+ * Every row contains its own GAME and YEAR.
  */
 function processRows(rows) {
-
-    let currentGame = "";
-    let currentYear = "";
-
-    let lastPortData = null;
 
     const result = [];
 
 
     for (const row of rows) {
 
-        const gameValue =
+        const game =
             getColumn(row, [
                 "GAME",
                 "GAME NAME",
@@ -287,7 +286,7 @@ function processRows(rows) {
             ]).trim();
 
 
-        const yearValue =
+        const year =
             getColumn(row, [
                 "YEAR",
                 "ANO",
@@ -295,26 +294,6 @@ function processRows(rows) {
             ]).trim();
 
 
-        /*
-         * If we find a new game,
-         * update the current game.
-         */
-        if (gameValue) {
-            currentGame = gameValue;
-        }
-
-
-        /*
-         * Same for the year.
-         */
-        if (yearValue) {
-            currentYear = yearValue;
-        }
-
-
-        /*
-         * Read port-specific columns.
-         */
         const project =
             getColumn(row, [
                 "PROJECT",
@@ -394,126 +373,55 @@ function processRows(rows) {
 
 
         /*
-         * Check whether this row actually contains
-         * port-specific information.
+         * A row is considered a port when it has
+         * a game and some port-specific data.
          */
         const hasPortData =
-            Boolean(
-                project ||
-                link ||
-                url ||
-                developer ||
-                version ||
-                controller ||
-                files ||
-                works ||
-                lastUpdate ||
-                notes
-            );
+            project ||
+            link ||
+            url ||
+            developer ||
+            version ||
+            controller ||
+            files ||
+            works ||
+            lastUpdate ||
+            notes;
 
 
-        /*
-         * If this row contains port information,
-         * save it as the latest port data.
-         */
-        if (hasPortData) {
-
-            lastPortData = {
-
-                project,
-                link,
-                url,
-                developer,
-                version,
-                controller,
-                files,
-                works,
-                lastUpdate,
-                notes
-
-            };
-
-        }
-
-
-        /*
-         * If the current row has no port data,
-         * but there is previous port data, reuse it.
-         *
-         * This handles merged cells in Google Sheets.
-         */
-        let portData = null;
-
-
-        if (hasPortData) {
-
-            portData = {
-
-                project,
-                link,
-                url,
-                developer,
-                version,
-                controller,
-                files,
-                works,
-                lastUpdate,
-                notes
-
-            };
-
-        } else if (lastPortData) {
-
-            portData = {
-
-                ...lastPortData
-
-            };
-        }
-
-
-        /*
-         * Ignore rows without a game.
-         */
-        if (!currentGame) {
-            continue;
-        }
-
-
-        /*
-         * Ignore rows that contain neither
-         * their own nor inherited port data.
-         */
-        if (!portData) {
+        if (
+            !game ||
+            !hasPortData
+        ) {
             continue;
         }
 
 
         result.push({
 
-            game: currentGame,
+            game: game,
 
-            year: currentYear,
+            year: year,
 
-            project: portData.project,
+            project: project,
 
-            link: portData.link,
+            link: link,
 
-            url: portData.url,
+            url: url,
 
-            developer: portData.developer,
+            developer: developer,
 
-            version: portData.version,
+            version: version,
 
-            controller: portData.controller,
+            controller: controller,
 
-            files: portData.files,
+            files: files,
 
-            works: portData.works,
+            works: works,
 
-            lastUpdate: portData.lastUpdate,
+            lastUpdate: lastUpdate,
 
-            notes: portData.notes
+            notes: notes
 
         });
     }
@@ -528,7 +436,8 @@ function processRows(rows) {
  */
 function groupGames(rows) {
 
-    const grouped = new Map();
+    const grouped =
+        new Map();
 
 
     for (const port of rows) {
@@ -543,8 +452,13 @@ function groupGames(rows) {
                 key,
                 {
                     name: port.game,
+
                     year: port.year,
-                    slug: createSlug(port.game),
+
+                    slug: createSlug(
+                        port.game
+                    ),
+
                     ports: []
                 }
             );
@@ -556,15 +470,16 @@ function groupGames(rows) {
 
 
         /*
-         * If we find a year that we did not
-         * have before, save it.
+         * If the game already exists but
+         * does not have a year, use this row.
          */
         if (
             !game.year &&
             port.year
         ) {
 
-            game.year = port.year;
+            game.year =
+                port.year;
         }
 
 
@@ -599,274 +514,4 @@ function displayGames(list) {
             "0 games";
 
 
-        return;
-    }
-
-
-    statusElement.textContent =
-        `${list.length} game${list.length !== 1 ? "s" : ""}`;
-
-
-    const fragment =
-        document.createDocumentFragment();
-
-
-    for (const game of list) {
-
-        /*
-         * Each game points to:
-         *
-         * game.html?game=slug
-         */
-        const element =
-            document.createElement("a");
-
-
-        element.className =
-            "game";
-
-
-        element.href =
-            `game.html?game=${encodeURIComponent(game.slug)}`;
-
-
-        const name =
-            document.createElement("h2");
-
-
-        name.className =
-            "game-name";
-
-
-        name.textContent =
-            game.name;
-
-
-        const info =
-            document.createElement("div");
-
-
-        info.className =
-            "game-info";
-
-
-        /*
-         * Year
-         */
-        if (game.year) {
-
-            const span =
-                document.createElement("span");
-
-
-            span.textContent =
-                game.year;
-
-
-            info.appendChild(span);
-        }
-
-
-        /*
-         * Number of ports.
-         */
-        const portCount =
-            document.createElement("span");
-
-
-        portCount.textContent =
-            `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
-
-
-        info.appendChild(portCount);
-
-
-        element.appendChild(name);
-        element.appendChild(info);
-
-
-        fragment.appendChild(element);
-    }
-
-
-    gameList.appendChild(fragment);
-}
-
-
-/*
- * Search.
- */
-function searchGames() {
-
-    const query =
-        normalizeText(searchInput.value);
-
-
-    if (!query) {
-
-        displayGames(games);
-
-        return;
-    }
-
-
-    const filtered =
-        games.filter(game => {
-
-            const searchableText = [
-
-                game.name,
-                game.year,
-
-                ...game.ports.map(
-                    port => [
-
-                        port.project,
-                        port.developer,
-                        port.version,
-                        port.notes
-
-                    ].join(" ")
-                )
-
-            ].join(" ");
-
-
-            return normalizeText(
-                searchableText
-            ).includes(query);
-        });
-
-
-    displayGames(filtered);
-}
-
-
-/*
- * Load Google Sheets.
- */
-async function loadGames() {
-
-    try {
-
-        statusElement.textContent =
-            "Loading games...";
-
-
-        const response =
-            await fetch(SHEET_URL);
-
-
-        if (!response.ok) {
-
-            throw new Error(
-                `HTTP error ${response.status}`
-            );
-        }
-
-
-        const csv =
-            await response.text();
-
-
-        if (
-            !csv ||
-            !csv.trim()
-        ) {
-
-            throw new Error(
-                "Google Sheets returned an empty response."
-            );
-        }
-
-
-        const rows =
-            parseCSV(csv);
-
-
-        if (rows.length === 0) {
-
-            throw new Error(
-                "The sheet contains no data."
-            );
-        }
-
-
-        const processedRows =
-            processRows(rows);
-
-
-        if (
-            processedRows.length === 0
-        ) {
-
-            throw new Error(
-                "No games or ports were found in the sheet."
-            );
-        }
-
-
-        games =
-            groupGames(processedRows);
-
-
-        /*
-         * Alphabetical order.
-         */
-        games.sort(
-            (a, b) =>
-                a.name.localeCompare(
-                    b.name,
-                    "en",
-                    {
-                        sensitivity: "base"
-                    }
-                )
-        );
-
-
-        displayGames(games);
-
-
-    } catch (error) {
-
-        console.error(
-            "Could not load games:",
-            error
-        );
-
-
-        statusElement.textContent =
-            "";
-
-
-        gameList.innerHTML = `
-            <div class="error">
-
-                <strong>
-                    Could not load the games.
-                </strong>
-
-                <br><br>
-
-                ${error.message}
-
-            </div>
-        `;
-    }
-}
-
-
-/*
- * Search events.
- */
-searchInput.addEventListener(
-    "input",
-    searchGames
-);
-
-
-/*
- * Start loading the games.
- */
-loadGames();
+        return
