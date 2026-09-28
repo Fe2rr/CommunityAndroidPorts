@@ -619,10 +619,10 @@ function displayPlatformMenu() {
 
 
     /*
-     * Nintendo · Consolas.
+     * Nintendo.
      */
     addMenuSeparator(
-        "Nintendo · Consolas"
+        "Nintendo"
     );
 
 
@@ -660,10 +660,10 @@ function displayPlatformMenu() {
 
 
     /*
-     * PlayStation · Consolas.
+     * PlayStation.
      */
     addMenuSeparator(
-        "PlayStation · Consolas"
+        "PlayStation"
     );
 
 
@@ -677,10 +677,10 @@ function displayPlatformMenu() {
 
 
     /*
-     * Xbox · Consolas.
+     * Microsoft.
      */
     addMenuSeparator(
-        "Xbox · Consolas"
+        "Microsoft"
     );
 
 
