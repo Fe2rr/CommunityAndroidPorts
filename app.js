@@ -891,6 +891,22 @@ function displayFilteredGames() {
         games.filter(game => {
 
             /*
+             * Multi-game Apps category.
+             */
+            if (
+                selectedCategory === "multi-game-apps" &&
+                !game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        "multi-game apps"
+                )
+            ) {
+
+                return false;
+            }
+
+
+            /*
              * Dual Screen category.
              */
             if (
