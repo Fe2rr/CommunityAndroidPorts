@@ -650,8 +650,8 @@ function findGamesUsingApp(
  * Display the list of games that use
  * a Multi-game App.
  *
- * This version can place the list
- * inside a specific port card.
+ * parentElement allows the list to be
+ * placed inside a specific port card.
  */
 function displayGamesUsingApp(
     appName,
@@ -932,6 +932,12 @@ function displayGame(
 
 
         /*
+         * Add the port card to the page.
+         */
+        portList.appendChild(card);
+
+
+        /*
          * If this specific port uses a
          * Multi-game App, display the
          * other games supported by it.
@@ -949,28 +955,20 @@ function displayGame(
                 card
             );
         }
-
-
-        /*
-         * Add the complete port card
-         * to the page.
-         */
-        portList.appendChild(card);
     }
 
 
     /*
-     * If the selected entry itself is
-     * a Multi-game App, display the
-     * games that use it.
+     * If this is a Multi-game App,
+     * display the games that use it.
      */
     if (
         isMultiGameApp(game)
     ) {
 
         /*
-         * The Multi-game App page keeps
-         * the original behavior.
+         * Keep the original behavior
+         * for the Multi-game App page.
          */
         const gamesUsingApp =
             findGamesUsingApp(
@@ -1223,4 +1221,6 @@ async function loadGame() {
 
         /*
          * Update browser title.
-         *
+         */
+        document.title =
+       
