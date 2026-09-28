@@ -534,6 +534,34 @@ function isMultiGameApp(game) {
 
 
 /*
+ * Check whether a specific port uses
+ * a Multi-game App.
+ */
+function isMultiGameAppPort(
+    port,
+    allRows
+) {
+
+    if (!port.project) {
+        return false;
+    }
+
+
+    const projectName =
+        normalizeText(port.project);
+
+
+    return allRows.some(
+        row =>
+            normalizeText(row.platform) ===
+            "multi-game apps" &&
+            normalizeText(row.game) ===
+            projectName
+    );
+}
+
+
+/*
  * Find games that use this Multi-game App.
  *
  * A game uses the app when its PROJECT
@@ -621,10 +649,14 @@ function findGamesUsingApp(
 /*
  * Display the list of games that use
  * a Multi-game App.
+ *
+ * This version can place the list
+ * inside a specific port card.
  */
 function displayGamesUsingApp(
     appName,
-    allRows
+    allRows,
+    parentElement = portList
 ) {
 
     const gamesUsingApp =
@@ -654,7 +686,7 @@ function displayGamesUsingApp(
 
 
     title.textContent =
-        "Games using this app";
+        "With this port you can also play:";
 
 
     section.appendChild(title);
@@ -712,7 +744,7 @@ function displayGamesUsingApp(
     section.appendChild(list);
 
 
-    portList.appendChild(section);
+    parentElement.appendChild(section);
 }
 
 
@@ -899,22 +931,135 @@ function displayGame(
         }
 
 
+        /*
+         * If this specific port uses a
+         * Multi-game App, display the
+         * other games supported by it.
+         */
+        if (
+            isMultiGameAppPort(
+                port,
+                allRows
+            )
+        ) {
+
+            displayGamesUsingApp(
+                port.project,
+                allRows,
+                card
+            );
+        }
+
+
+        /*
+         * Add the complete port card
+         * to the page.
+         */
         portList.appendChild(card);
     }
 
 
     /*
-     * If this is a Multi-game App,
-     * display the games that use it.
+     * If the selected entry itself is
+     * a Multi-game App, display the
+     * games that use it.
      */
     if (
         isMultiGameApp(game)
     ) {
 
-        displayGamesUsingApp(
-            game.name,
-            allRows
-        );
+        /*
+         * The Multi-game App page keeps
+         * the original behavior.
+         */
+        const gamesUsingApp =
+            findGamesUsingApp(
+                game.name,
+                allRows
+            );
+
+
+        if (
+            gamesUsingApp.length > 0
+        ) {
+
+            const section =
+                document.createElement("section");
+
+
+            section.className =
+                "games-using-app";
+
+
+            const title =
+                document.createElement("h2");
+
+
+            title.textContent =
+                "Games using this app";
+
+
+            section.appendChild(title);
+
+
+            const list =
+                document.createElement("div");
+
+
+            list.className =
+                "games-using-app-list";
+
+
+            for (
+                const compatibleGame
+                of gamesUsingApp
+            ) {
+
+                const link =
+                    document.createElement("a");
+
+
+                link.className =
+                    "games-using-app-item";
+
+
+                link.href =
+                    `game.html?game=${encodeURIComponent(
+                        createSlug(
+                            compatibleGame.name
+                        )
+                    )}`;
+
+
+                link.textContent =
+                    compatibleGame.name;
+
+
+                if (
+                    compatibleGame.year
+                ) {
+
+                    const year =
+                        document.createElement("span");
+
+
+                    year.textContent =
+                        ` (${compatibleGame.year})`;
+
+
+                    link.appendChild(year);
+                }
+
+
+                list.appendChild(link);
+            }
+
+
+            section.appendChild(list);
+
+
+            portList.appendChild(section);
+        }
     }
 }
 
@@ -1078,74 +1223,4 @@ async function loadGame() {
 
         /*
          * Update browser title.
-         */
-        document.title =
-            `${game.name} - Community Android Ports`;
-
-
-        /*
-         * Display game.
-         */
-        displayGame(
-            game,
-            processedRows
-        );
-
-
-    } catch (error) {
-
-        console.error(
-            "Could not load game:",
-            error
-        );
-
-
-        gameTitle.textContent =
-            "Error";
-
-
-        gameYear.textContent =
-            "";
-
-
-        statusElement.textContent =
-            "";
-
-
-        let message =
-            error.message;
-
-
-        /*
-         * Special message for a timeout.
-         */
-        if (
-            error.name === "AbortError"
-        ) {
-
-            message =
-                "Google Sheets did not respond within 15 seconds.";
-        }
-
-
-        portList.innerHTML = `
-            <div class="error">
-
-                <strong>
-                    Could not load the game.
-                </strong>
-
-                <br><br>
-
-                ${message}
-
-            </div>
-        `;
-    }
-}
-
-
-/*
- * Start.
- */
-loadGame();
+         *
