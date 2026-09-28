@@ -412,3 +412,162 @@ footer {
     }
 
 }
+/* MENU BUTTON */
+
+#menu-button {
+    position: absolute;
+
+    top: 20px;
+    left: 20px;
+
+    padding: 8px 10px;
+
+    background: transparent;
+
+    border: none;
+
+    color: #ffffff;
+
+    font-size: 28px;
+
+    cursor: pointer;
+}
+
+
+/* SIDE MENU */
+
+#side-menu {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 280px;
+    height: 100vh;
+
+    padding: 25px 20px;
+
+    background: #181818;
+
+    border-right:
+        1px solid #303030;
+
+    transform: translateX(-100%);
+
+    transition:
+        transform 0.2s ease;
+
+    z-index: 1000;
+}
+
+
+/* OPEN MENU */
+
+#side-menu.open {
+    transform: translateX(0);
+}
+
+
+/* CLOSE BUTTON */
+
+#menu-close {
+    display: block;
+
+    margin-left: auto;
+
+    background: transparent;
+
+    border: none;
+
+    color: #ffffff;
+
+    font-size: 30px;
+
+    cursor: pointer;
+}
+
+
+/* MENU TITLE */
+
+#side-menu h2 {
+    margin:
+        20px 0;
+
+    color: #ffffff;
+
+    font-size: 22px;
+}
+
+
+/* MENU OVERLAY */
+
+#menu-overlay {
+    position: fixed;
+
+    top: 0;
+    left: 0;
+
+    width: 100%;
+    height: 100%;
+
+    background: rgba(0, 0, 0, 0.6);
+
+    opacity: 0;
+
+    visibility: hidden;
+
+    transition:
+        opacity 0.2s ease;
+
+    z-index: 999;
+}
+
+
+/* OPEN OVERLAY */
+
+#menu-overlay.open {
+    opacity: 1;
+
+    visibility: visible;
+}
+
+
+/* PLATFORM LIST */
+
+#platform-list {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 5px;
+}
+
+
+/* PLATFORM BUTTONS */
+
+.platform-button {
+    width: 100%;
+
+    padding:
+        10px 12px;
+
+    background: transparent;
+
+    border: none;
+
+    border-radius: 6px;
+
+    color: #cccccc;
+
+    text-align: left;
+
+    font-size: 15px;
+
+    cursor: pointer;
+}
+
+.platform-button:hover {
+    background: #252525;
+
+    color: #ffffff;
+}
