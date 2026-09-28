@@ -1071,9 +1071,7 @@ async function loadGames() {
         displayPlatformMenu();
 
 
-        displayGames(
-            games
-        );
+        displayFilteredGames();
 
 
     } catch (error) {
