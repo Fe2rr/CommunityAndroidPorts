@@ -28,7 +28,7 @@ let games = [];
  */
 function normalizeHeader(value) {
 
-    return value
+    return String(value || "")
         .replace(/^\uFEFF/, "")
         .trim()
         .toUpperCase()
@@ -93,9 +93,6 @@ function parseCSV(csv) {
         const char = csv[i];
 
 
-        /*
-         * Quotes
-         */
         if (char === '"') {
 
             if (
@@ -116,9 +113,6 @@ function parseCSV(csv) {
         }
 
 
-        /*
-         * Comma outside quotes
-         */
         if (
             char === "," &&
             !insideQuotes
@@ -131,21 +125,16 @@ function parseCSV(csv) {
         }
 
 
-        /*
-         * End of row
-         */
         if (
             (char === "\n" || char === "\r") &&
             !insideQuotes
         ) {
 
-            /*
-             * Handle CRLF.
-             */
             if (
                 char === "\r" &&
                 csv[i + 1] === "\n"
             ) {
+
                 i++;
             }
 
@@ -154,9 +143,6 @@ function parseCSV(csv) {
             field = "";
 
 
-            /*
-             * Avoid completely empty rows.
-             */
             if (
                 row.some(
                     value =>
@@ -178,9 +164,6 @@ function parseCSV(csv) {
     }
 
 
-    /*
-     * Last field.
-     */
     if (
         field.length > 0 ||
         row.length > 0
@@ -372,10 +355,6 @@ function processRows(rows) {
             ]).trim();
 
 
-        /*
-         * A row is considered a port when it has
-         * a game and some port-specific data.
-         */
         const hasPortData =
             project ||
             link ||
@@ -400,27 +379,16 @@ function processRows(rows) {
         result.push({
 
             game: game,
-
             year: year,
-
             project: project,
-
             link: link,
-
             url: url,
-
             developer: developer,
-
             version: version,
-
             controller: controller,
-
             files: files,
-
             works: works,
-
             lastUpdate: lastUpdate,
-
             notes: notes
 
         });
@@ -452,13 +420,8 @@ function groupGames(rows) {
                 key,
                 {
                     name: port.game,
-
                     year: port.year,
-
-                    slug: createSlug(
-                        port.game
-                    ),
-
+                    slug: createSlug(port.game),
                     ports: []
                 }
             );
@@ -469,10 +432,6 @@ function groupGames(rows) {
             grouped.get(key);
 
 
-        /*
-         * If the game already exists but
-         * does not have a year, use this row.
-         */
         if (
             !game.year &&
             port.year
@@ -514,4 +473,197 @@ function displayGames(list) {
             "0 games";
 
 
-        return
+        return;
+    }
+
+
+    statusElement.textContent =
+        `${list.length} ${list.length === 1 ? "game" : "games"}`;
+
+
+    for (const game of list) {
+
+        const card =
+            document.createElement("a");
+
+        card.className =
+            "game-card";
+
+        card.href =
+            `game.html?game=${encodeURIComponent(game.slug)}`;
+
+
+        const title =
+            document.createElement("h2");
+
+        title.textContent =
+            game.name;
+
+
+        card.appendChild(title);
+
+
+        if (game.year) {
+
+            const year =
+                document.createElement("span");
+
+            year.className =
+                "game-year";
+
+            year.textContent =
+                game.year;
+
+            card.appendChild(year);
+        }
+
+
+        const portCount =
+            document.createElement("span");
+
+        portCount.className =
+            "port-count";
+
+        portCount.textContent =
+            `${game.ports.length} ${
+                game.ports.length === 1
+                    ? "port"
+                    : "ports"
+            }`;
+
+
+        card.appendChild(portCount);
+
+
+        gameList.appendChild(card);
+    }
+}
+
+
+/*
+ * Search games.
+ */
+function searchGames() {
+
+    const query =
+        normalizeText(
+            searchInput.value
+        );
+
+
+    if (!query) {
+
+        displayGames(games);
+
+        return;
+    }
+
+
+    const filtered =
+        games.filter(game => {
+
+            const gameName =
+                normalizeText(game.name);
+
+
+            return gameName.includes(query);
+        });
+
+
+    displayGames(filtered);
+}
+
+
+/*
+ * Load games from Google Sheets.
+ */
+async function loadGames() {
+
+    statusElement.textContent =
+        "Loading games...";
+
+
+    try {
+
+        const response =
+            await fetch(SHEET_URL);
+
+
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP ${response.status}`
+            );
+        }
+
+
+        const csv =
+            await response.text();
+
+
+        const rows =
+            parseCSV(csv);
+
+
+        const processed =
+            processRows(rows);
+
+
+        games =
+            groupGames(processed);
+
+
+        /*
+         * Sort alphabetically.
+         */
+        games.sort(
+            (a, b) =>
+                a.name.localeCompare(
+                    b.name,
+                    undefined,
+                    {
+                        sensitivity: "base"
+                    }
+                )
+        );
+
+
+        displayGames(games);
+
+    } catch (error) {
+
+        console.error(
+            "Error loading games:",
+            error
+        );
+
+
+        gameList.innerHTML = `
+            <div class="no-results">
+                Unable to load games.
+            </div>
+        `;
+
+
+        statusElement.textContent =
+            "Error loading games";
+    }
+}
+
+
+/*
+ * Search whenever the user types.
+ */
+if (searchInput) {
+
+    searchInput.addEventListener(
+        "input",
+        searchGames
+    );
+}
+
+
+/*
+ * Load the games when the page opens.
+ */
+loadGames();
