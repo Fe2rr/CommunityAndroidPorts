@@ -35,6 +35,8 @@ let games = [];
 
 let selectedPlatform = "";
 
+let selectedCategory = "";
+
 
 /*
  * Normalize column names.
@@ -475,6 +477,19 @@ function groupGames(rows) {
 
 
 /*
+ * Check if a game has a Dual Screen project.
+ */
+function isDualScreen(game) {
+
+    return game.ports.some(
+        port =>
+            normalizeText(port.project)
+                .includes("dual screen")
+    );
+}
+
+
+/*
  * Get all platforms used by the games.
  */
 function getPlatforms() {
@@ -570,6 +585,7 @@ function displayPlatformMenu() {
         () => {
 
             selectedPlatform = "";
+            selectedCategory = "";
 
             displayFilteredGames();
 
@@ -615,6 +631,8 @@ function displayPlatformMenu() {
                 selectedPlatform =
                     platform;
 
+                selectedCategory = "";
+
                 displayFilteredGames();
 
                 closeMenu();
@@ -626,6 +644,44 @@ function displayPlatformMenu() {
             button
         );
     }
+
+
+    /*
+     * Dual Screen category.
+     */
+    const dualScreenButton =
+        document.createElement("button");
+
+
+    dualScreenButton.type =
+        "button";
+
+
+    dualScreenButton.className =
+        "platform-button";
+
+
+    dualScreenButton.textContent =
+        "Dual Screen";
+
+
+    dualScreenButton.addEventListener(
+        "click",
+        () => {
+
+            selectedPlatform = "";
+            selectedCategory = "dual-screen";
+
+            displayFilteredGames();
+
+            closeMenu();
+        }
+    );
+
+
+    platformList.appendChild(
+        dualScreenButton
+    );
 }
 
 
@@ -753,6 +809,18 @@ function displayFilteredGames() {
 
     const filtered =
         games.filter(game => {
+
+            /*
+             * Dual Screen category.
+             */
+            if (
+                selectedCategory === "dual-screen" &&
+                !isDualScreen(game)
+            ) {
+
+                return false;
+            }
+
 
             /*
              * Platform filter.
