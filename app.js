@@ -490,48 +490,6 @@ function isDualScreen(game) {
 
 
 /*
- * Get all platforms used by the games.
- */
-function getPlatforms() {
-
-    const platforms = new Map();
-
-
-    for (const game of games) {
-
-        for (const platform of game.platforms) {
-
-            const key =
-                normalizeText(platform);
-
-
-            if (!platforms.has(key)) {
-
-                platforms.set(
-                    key,
-                    platform
-                );
-            }
-        }
-    }
-
-
-    return Array.from(
-        platforms.values()
-    ).sort(
-        (a, b) =>
-            a.localeCompare(
-                b,
-                "en",
-                {
-                    sensitivity: "base"
-                }
-            )
-    );
-}
-
-
-/*
  * Open menu.
  */
 function openMenu() {
@@ -554,7 +512,7 @@ function closeMenu() {
 
 
 /*
- * Create platform menu.
+ * Create category menu.
  */
 function displayPlatformMenu() {
 
@@ -562,23 +520,19 @@ function displayPlatformMenu() {
 
 
     /*
-     * All Platforms.
+     * All Categories.
      */
     const allButton =
         document.createElement("button");
 
-
     allButton.type =
         "button";
-
 
     allButton.className =
         "platform-button";
 
-
     allButton.textContent =
-        "All Platforms";
-
+        "All Categories";
 
     allButton.addEventListener(
         "click",
@@ -593,30 +547,58 @@ function displayPlatformMenu() {
         }
     );
 
-
     platformList.appendChild(
         allButton
     );
 
 
     /*
-     * Dual Screen category.
+     * Multi-game Apps.
+     */
+    const multiGameButton =
+        document.createElement("button");
+
+    multiGameButton.type =
+        "button";
+
+    multiGameButton.className =
+        "platform-button";
+
+    multiGameButton.textContent =
+        "Multi-game Apps";
+
+    multiGameButton.addEventListener(
+        "click",
+        () => {
+
+            selectedPlatform = "";
+            selectedCategory = "multi-game-apps";
+
+            displayFilteredGames();
+
+            closeMenu();
+        }
+    );
+
+    platformList.appendChild(
+        multiGameButton
+    );
+
+
+    /*
+     * Dual Screen.
      */
     const dualScreenButton =
         document.createElement("button");
 
-
     dualScreenButton.type =
         "button";
-
 
     dualScreenButton.className =
         "platform-button";
 
-
     dualScreenButton.textContent =
         "Dual Screen";
-
 
     dualScreenButton.addEventListener(
         "click",
@@ -631,85 +613,145 @@ function displayPlatformMenu() {
         }
     );
 
-
     platformList.appendChild(
         dualScreenButton
     );
 
 
     /*
-     * Platforms from Google Sheets.
+     * Nintendo · Consolas.
      */
-    const platforms =
-        getPlatforms();
+    addMenuSeparator(
+        "Nintendo · Consolas"
+    );
 
 
-    for (const platform of platforms) {
+    addPlatformButton(
+        "NES"
+    );
 
-        const button =
-            document.createElement("button");
+    addPlatformButton(
+        "Super Nintendo"
+    );
+
+    addPlatformButton(
+        "Nintendo 64"
+    );
+
+    addPlatformButton(
+        "GameCube / Wii"
+    );
+
+    addPlatformButton(
+        "Gameboy / Gameboy Color"
+    );
+
+    addPlatformButton(
+        "Gameboy Advance"
+    );
+
+    addPlatformButton(
+        "Nintendo DS"
+    );
+
+    addPlatformButton(
+        "Nintendo 3DS"
+    );
 
 
-        button.type =
-            "button";
+    /*
+     * PlayStation · Consolas.
+     */
+    addMenuSeparator(
+        "PlayStation · Consolas"
+    );
 
 
-        button.className =
-            "platform-button";
+    addPlatformButton(
+        "Playstation"
+    );
+
+    addPlatformButton(
+        "Playstation Portable"
+    );
 
 
-        button.textContent =
-            platform;
+    /*
+     * Xbox · Consolas.
+     */
+    addMenuSeparator(
+        "Xbox · Consolas"
+    );
 
 
-        button.addEventListener(
-            "click",
-            () => {
+    addPlatformButton(
+        "Xbox"
+    );
 
-                selectedPlatform =
-                    platform;
-
-                selectedCategory = "";
-
-                displayFilteredGames();
-
-                closeMenu();
-            }
-        );
+    addPlatformButton(
+        "Xbox 360"
+    );
 
 
-        platformList.appendChild(
-            button
-        );
-    }
+    /*
+     * Others.
+     */
+    addMenuSeparator(
+        "Others"
+    );
+
+
+    addPlatformButton(
+        "Others"
+    );
 }
 
 
-    /*
-     * Dual Screen category.
-     */
-    const dualScreenButton =
+/*
+ * Add a menu separator/title.
+ */
+function addMenuSeparator(title) {
+
+    const separator =
+        document.createElement("div");
+
+    separator.className =
+        "menu-separator";
+
+    separator.textContent =
+        "── " + title + " ──";
+
+    platformList.appendChild(
+        separator
+    );
+}
+
+
+/*
+ * Add a platform button.
+ */
+function addPlatformButton(platform) {
+
+    const button =
         document.createElement("button");
 
-
-    dualScreenButton.type =
+    button.type =
         "button";
 
-
-    dualScreenButton.className =
+    button.className =
         "platform-button";
 
+    button.textContent =
+        platform;
 
-    dualScreenButton.textContent =
-        "Dual Screen";
-
-
-    dualScreenButton.addEventListener(
+    button.addEventListener(
         "click",
         () => {
 
-            selectedPlatform = "";
-            selectedCategory = "dual-screen";
+            selectedPlatform =
+                platform;
+
+            selectedCategory = "";
 
             displayFilteredGames();
 
@@ -717,9 +759,8 @@ function displayPlatformMenu() {
         }
     );
 
-
     platformList.appendChild(
-        dualScreenButton
+        button
     );
 }
 
