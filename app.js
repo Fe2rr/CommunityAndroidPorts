@@ -600,6 +600,44 @@ function displayPlatformMenu() {
 
 
     /*
+     * Dual Screen category.
+     */
+    const dualScreenButton =
+        document.createElement("button");
+
+
+    dualScreenButton.type =
+        "button";
+
+
+    dualScreenButton.className =
+        "platform-button";
+
+
+    dualScreenButton.textContent =
+        "Dual Screen";
+
+
+    dualScreenButton.addEventListener(
+        "click",
+        () => {
+
+            selectedPlatform = "";
+            selectedCategory = "dual-screen";
+
+            displayFilteredGames();
+
+            closeMenu();
+        }
+    );
+
+
+    platformList.appendChild(
+        dualScreenButton
+    );
+
+
+    /*
      * Platforms from Google Sheets.
      */
     const platforms =
@@ -644,6 +682,7 @@ function displayPlatformMenu() {
             button
         );
     }
+}
 
 
     /*
