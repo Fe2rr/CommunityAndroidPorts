@@ -1,229 +1,804 @@
+/*
+
+GOOGLE SHEETS
+
+This is your Google Sheets file.
+
+Each row should contain its own GAME and YEAR.
+*/
+
+
 const SHEET_URL =
-    "https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
+"https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
 
 const gameList =
-    document.getElementById("game-list");
+document.getElementById("game-list");
+
+const searchInput =
+document.getElementById("search");
 
 const statusElement =
-    document.getElementById("status");
+document.getElementById("status");
 
+let games = [];
 
-async function loadGames() {
+/*
 
-    statusElement.textContent =
-        "Reading Google Sheets...";
-
-    try {
-
-        const response =
-            await fetch(SHEET_URL);
-
-        if (!response.ok) {
-
-            throw new Error(
-                "HTTP error: " + response.status
-            );
-        }
-
-        const csv =
-            await response.text();
-
-        const rows =
-            parseCSV(csv);
-
-        console.log("CSV rows:", rows);
-
-        if (rows.length === 0) {
-
-            throw new Error(
-                "The CSV is empty."
-            );
-        }
-
-        const headers =
-            rows[0].map(normalizeHeader);
-
-        console.log("Headers:", headers);
-
-        const gameColumn =
-            findGameColumn(headers);
-
-        if (gameColumn === -1) {
-
-            throw new Error(
-                "Game column not found."
-            );
-        }
-
-        const games = [];
-
-        for (let i = 1; i < rows.length; i++) {
-
-            const row = rows[i];
-
-            const game =
-                row[gameColumn]?.trim();
-
-            if (game) {
-
-                games.push(game);
-            }
-        }
-
-        const uniqueGames =
-            [...new Set(games)];
-
-        displayGames(uniqueGames);
-
-        statusElement.textContent =
-            `${uniqueGames.length} games loaded.`;
-
-    } catch (error) {
-
-        console.error(error);
-
-        statusElement.textContent =
-            "Error loading games.";
-
-        gameList.innerHTML =
-            `<p>${escapeHTML(error.message)}</p>`;
-    }
-}
-
-
+Normalize column names.
+*/
 function normalizeHeader(value) {
 
-    return String(value)
-        .replace(/^\uFEFF/, "")
-        .trim()
-        .toUpperCase()
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "");
+return value
+.replace(/^\uFEFF/, "")
+.trim()
+.toUpperCase()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g, "");
 }
 
 
-function findGameColumn(headers) {
+/*
 
-    const possibleNames = [
-        "GAME",
-        "GAME NAME",
-        "NAME",
-        "JUEGO"
-    ];
+Normalize text for game comparison.
+*/
+function normalizeText(value) {
 
-    for (const name of possibleNames) {
-
-        const index =
-            headers.indexOf(name);
-
-        if (index !== -1) {
-
-            return index;
-        }
-    }
-
-    return -1;
+return String(value || "")
+.trim()
+.toLowerCase()
+.normalize("NFD")
+.replace(/[\u0300-\u036f]/g, "");
 }
 
 
+/*
+
+Convert the game name into an identifier
+
+that can be used in the URL.
+
+Example:
+
+The Legend of Zelda: A Link to the Past
+
+↓
+
+the-legend-of-zelda-a-link-to-the-past
+*/
+function createSlug(name) {
+
+return normalizeText(name)
+.replace(/[^a-z0-9]+/g, "-")
+.replace(/^-+|-+$/g, "");
+}
+
+
+/*
+
+Full CSV parser.
+
+Handles:
+
+commas inside fields
+
+
+quotes
+
+
+line breaks inside fields
+*/
 function parseCSV(csv) {
 
-    const rows = [];
-    let row = [];
-    let field = "";
-    let insideQuotes = false;
 
-    for (let i = 0; i < csv.length; i++) {
+const rows = [];
 
-        const char = csv[i];
-        const next = csv[i + 1];
+let row = [];
+let field = "";
+let insideQuotes = false;
 
-        if (char === '"' && insideQuotes && next === '"') {
+for (let i = 0; i < csv.length; i++) {
 
-            field += '"';
-            i++;
-            continue;
-        }
+const char = csv[i];  
 
-        if (char === '"') {
 
-            insideQuotes = !insideQuotes;
-            continue;
-        }
+ /*  
+  * Quotes  
+  */  
+ if (char === '"') {  
 
-        if (char === "," && !insideQuotes) {
+     if (  
+         insideQuotes &&  
+         csv[i + 1] === '"'  
+     ) {  
 
-            row.push(field);
-            field = "";
-            continue;
-        }
+         field += '"';  
+         i++;  
 
-        if ((char === "\n" || char === "\r") && !insideQuotes) {
+     } else {  
 
-            if (char === "\r" && next === "\n") {
+         insideQuotes =  
+             !insideQuotes;  
+     }  
 
-                i++;
-            }
+     continue;  
+ }  
 
-            row.push(field);
-            field = "";
 
-            if (row.some(value => value.trim() !== "")) {
+ /*  
+  * Comma outside quotes  
+  */  
+ if (  
+     char === "," &&  
+     !insideQuotes  
+ ) {  
 
-                rows.push(row);
-            }
+     row.push(field);  
+     field = "";  
 
-            row = [];
+     continue;  
+ }  
 
-            continue;
-        }
 
-        field += char;
-    }
+ /*  
+  * End of row  
+  */  
+ if (  
+     (char === "\n" || char === "\r") &&  
+     !insideQuotes  
+ ) {  
 
-    if (field !== "" || row.length > 0) {
+     /*  
+      * Handle CRLF.  
+      */  
+     if (  
+         char === "\r" &&  
+         csv[i + 1] === "\n"  
+     ) {  
+         i++;  
+     }  
 
-        row.push(field);
 
-        if (row.some(value => value.trim() !== "")) {
+     row.push(field);  
+     field = "";  
 
-            rows.push(row);
-        }
-    }
 
-    return rows;
+     /*  
+      * Avoid completely empty rows.  
+      */  
+     if (  
+         row.some(  
+             value =>  
+                 value.trim() !== ""  
+         )  
+     ) {  
+
+         rows.push(row);  
+     }  
+
+
+     row = [];  
+
+     continue;  
+ }  
+
+
+ field += char;
+
+}
+
+/*
+
+Last field.
+*/
+if (
+field.length > 0 ||
+row.length > 0
+) {
+
+row.push(field);
+
+if (
+row.some(
+value =>
+value.trim() !== ""
+)
+) {
+
+rows.push(row);
+
+}
 }
 
 
-function displayGames(games) {
+if (rows.length === 0) {
+return [];
+}
 
-    gameList.innerHTML = "";
+/*
 
-    games.forEach(game => {
+First row = headers.
+*/
+const headers =
+rows.shift().map(
+normalizeHeader
+);
 
-        const element =
-            document.createElement("div");
 
-        element.className =
-            "game-card";
+/*
 
-        element.textContent =
-            game;
+Convert rows into objects.
+*/
+return rows.map(values => {
 
-        gameList.appendChild(element);
-    });
+const rowObject = {};
+
+headers.forEach(
+(header, index) => {
+
+rowObject[header] =  
+         (values[index] || "").trim();  
+
+ }
+
+);
+
+return rowObject;
+});
 }
 
 
-function escapeHTML(text) {
 
-    return String(text)
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#039;");
+/*
+
+Find a column.
+*/
+function getColumn(row, possibleNames) {
+
+for (const name of possibleNames) {
+
+const normalizedName =  
+     normalizeHeader(name);  
+
+
+ if (  
+     Object.prototype.hasOwnProperty.call(  
+         row,  
+         normalizedName  
+     )  
+ ) {  
+
+     return row[normalizedName];  
+ }
+
+}
+
+return "";
 }
 
 
+/*
+
+Convert CSV rows.
+
+Every row contains its own GAME and YEAR.
+*/
+function processRows(rows) {
+
+const result = [];
+
+for (const row of rows) {
+
+const game =  
+     getColumn(row, [  
+         "GAME",  
+         "GAME NAME",  
+         "NAME",  
+         "JUEGO"  
+     ]).trim();  
+
+
+ const year =  
+     getColumn(row, [  
+         "YEAR",  
+         "ANO",  
+         "AÑO"  
+     ]).trim();  
+
+
+ const project =  
+     getColumn(row, [  
+         "PROJECT",  
+         "PROYECTO"  
+     ]).trim();  
+
+
+ const link =  
+     getColumn(row, [  
+         "LINK",  
+         "PROJECT LINK",  
+         "ENLACE"  
+     ]).trim();  
+
+
+ const url =  
+     getColumn(row, [  
+         "URL"  
+     ]).trim();  
+
+
+ const developer =  
+     getColumn(row, [  
+         "DEVELOPER",  
+         "DEVELOPER/PUBLISHER",  
+         "DESARROLLADOR"  
+     ]).trim();  
+
+
+ const version =  
+     getColumn(row, [  
+         "VERSION",  
+         "VERSIÓN"  
+     ]).trim();  
+
+
+ const controller =  
+     getColumn(row, [  
+         "CONTROLLER SUPPORT",  
+         "CONTROLLER",  
+         "GAMEPAD",  
+         "MANDO"  
+     ]).trim();  
+
+
+ const files =  
+     getColumn(row, [  
+         "NEEDS GAME FILES?",  
+         "NEEDS GAME FILES",  
+         "GAME FILES",  
+         "NECESITA ARCHIVOS"  
+     ]).trim();  
+
+
+ const works =  
+     getColumn(row, [  
+         "WORKS?",  
+         "WORKS",  
+         "FUNCIONA"  
+     ]).trim();  
+
+
+ const lastUpdate =  
+     getColumn(row, [  
+         "LAST UPDATE",  
+         "LAST UPDATED",  
+         "ÚLTIMA ACTUALIZACIÓN"  
+     ]).trim();  
+
+
+ const notes =  
+     getColumn(row, [  
+         "NOTES",  
+         "NOTE",  
+         "NOTAS"  
+     ]).trim();  
+
+
+ /*  
+  * A row is considered a port when it has  
+  * a game and some port-specific data.  
+  */  
+ const hasPortData =  
+     project ||  
+     link ||  
+     url ||  
+     developer ||  
+     version ||  
+     controller ||  
+     files ||  
+     works ||  
+     lastUpdate ||  
+     notes;  
+
+
+ if (  
+     !game ||  
+     !hasPortData  
+ ) {  
+     continue;  
+ }  
+
+
+ result.push({  
+
+     game: game,  
+
+     year: year,  
+
+     project: project,  
+
+     link: link,  
+
+     url: url,  
+
+     developer: developer,  
+
+     version: version,  
+
+     controller: controller,  
+
+     files: files,  
+
+     works: works,  
+
+     lastUpdate: lastUpdate,  
+
+     notes: notes  
+
+ });
+
+}
+
+return result;
+}
+
+
+/*
+
+Group ports by game.
+*/
+function groupGames(rows) {
+
+const grouped =
+new Map();
+
+for (const port of rows) {
+
+const key =  
+     normalizeText(port.game);  
+
+
+ if (!grouped.has(key)) {  
+
+     grouped.set(  
+         key,  
+         {  
+             name: port.game,  
+
+             year: port.year,  
+
+             slug: createSlug(  
+                 port.game  
+             ),  
+
+             ports: []  
+         }  
+     );  
+ }  
+
+
+ const game =  
+     grouped.get(key);  
+
+
+ /*  
+  * If the game already exists but  
+  * does not have a year, use this row.  
+  */  
+ if (  
+     !game.year &&  
+     port.year  
+ ) {  
+
+     game.year =  
+         port.year;  
+ }  
+
+
+ game.ports.push(port);
+
+}
+
+return Array.from(
+grouped.values()
+);
+}
+
+
+/*
+
+Display games.
+*/
+function displayGames(list) {
+
+gameList.innerHTML = "";
+
+if (list.length === 0) {
+
+gameList.innerHTML = `  
+     <div class="no-results">  
+         No games found.  
+     </div>  
+ `;  
+
+
+ statusElement.textContent =  
+     "0 games";  
+
+
+ return;
+
+}
+
+statusElement.textContent =
+${list.length} game${list.length !== 1 ? "s" : ""};
+
+const fragment =
+document.createDocumentFragment();
+
+for (const game of list) {
+
+const element =  
+     document.createElement("a");  
+
+
+ element.className =  
+     "game";  
+
+
+ element.href =  
+     `game.html?game=${encodeURIComponent(game.slug)}`;  
+
+
+ const name =  
+     document.createElement("h2");  
+
+
+ name.className =  
+     "game-name";  
+
+
+ name.textContent =  
+     game.name;  
+
+
+ const info =  
+     document.createElement("div");  
+
+
+ info.className =  
+     "game-info";  
+
+
+ /*  
+  * Year.  
+  */  
+ if (game.year) {  
+
+     const span =  
+         document.createElement("span");  
+
+
+     span.textContent =  
+         game.year;  
+
+
+     info.appendChild(span);  
+ }  
+
+
+ /*  
+  * Number of ports.  
+  */  
+ const portCount =  
+     document.createElement("span");  
+
+
+ portCount.textContent =  
+     `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;  
+
+
+ info.appendChild(portCount);  
+
+
+ element.appendChild(name);  
+
+ element.appendChild(info);  
+
+
+ fragment.appendChild(element);
+
+}
+
+gameList.appendChild(fragment);
+}
+
+
+/*
+
+Search.
+*/
+function searchGames() {
+
+const query =
+normalizeText(
+searchInput.value
+);
+
+if (!query) {
+
+displayGames(games);  
+
+ return;
+
+}
+
+const filtered =
+games.filter(game => {
+
+const searchableText = [  
+
+         game.name,  
+
+         game.year,  
+
+         ...game.ports.map(  
+             port => [  
+
+                 port.project,  
+
+                 port.developer,  
+
+                 port.version,  
+
+                 port.notes  
+
+             ].join(" ")  
+         )  
+
+     ].join(" ");  
+
+
+     return normalizeText(  
+         searchableText  
+     ).includes(query);  
+ });
+
+displayGames(filtered);
+}
+
+
+/*
+
+Load Google Sheets.
+*/
+async function loadGames() {
+
+try {
+
+statusElement.textContent =  
+     "Loading games...";  
+
+
+ const response =  
+     await fetch(SHEET_URL);  
+
+
+ if (!response.ok) {  
+
+     throw new Error(  
+         `HTTP error ${response.status}`  
+     );  
+ }  
+
+
+ const csv =  
+     await response.text();  
+
+
+ if (  
+     !csv ||  
+     !csv.trim()  
+ ) {  
+
+     throw new Error(  
+         "Google Sheets returned an empty response."  
+     );  
+ }  
+
+
+ const rows =  
+     parseCSV(csv);  
+
+
+ if (  
+     rows.length === 0  
+ ) {  
+
+     throw new Error(  
+         "The sheet contains no data."  
+     );  
+ }  
+
+
+ const processedRows =  
+     processRows(rows);  
+
+
+ if (  
+     processedRows.length === 0  
+ ) {  
+
+     throw new Error(  
+         "No games or ports were found in the sheet."  
+     );  
+ }  
+
+
+ games =  
+     groupGames(  
+         processedRows  
+     );  
+
+
+ /*  
+  * Alphabetical order.  
+  */  
+ games.sort(  
+     (a, b) =>  
+         a.name.localeCompare(  
+             b.name,  
+             "en",  
+             {  
+                 sensitivity: "base"  
+             }  
+         )  
+ );  
+
+
+ displayGames(games);
+
+} catch (error) {
+
+console.error(  
+     "Could not load games:",  
+     error  
+ );  
+
+
+ statusElement.textContent =  
+     "";  
+
+
+ gameList.innerHTML = `  
+     <div class="error">  
+
+         <strong>  
+             Could not load the games.  
+         </strong>  
+
+         <br><br>  
+
+         ${error.message}  
+
+     </div>  
+ `;
+
+}
+}
+
+
+/*
+
+Search events.
+*/
+searchInput.addEventListener(
+"input",
+searchGames
+);
+
+
+/*
+
+Start loading the games.
+*/
 loadGames();
