@@ -891,6 +891,27 @@ function displayFilteredGames() {
         games.filter(game => {
 
             /*
+             * Hide Multi-game Apps from
+             * All Categories.
+             *
+             * They are shown only when
+             * the Multi-game Apps category
+             * is selected.
+             */
+            if (
+                selectedCategory !== "multi-game-apps" &&
+                game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        "multi-game apps"
+                )
+            ) {
+
+                return false;
+            }
+
+
+            /*
              * Multi-game Apps category.
              */
             if (
