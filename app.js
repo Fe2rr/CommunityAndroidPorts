@@ -4,21 +4,18 @@ GOOGLE SHEETS
 
 This is your Google Sheets file.
 
-Each row should contain its own GAME and YEAR.
+There is no need to modify or remove
+
+merged cells.
 */
 
 
 const SHEET_URL =
 "https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
 
-const gameList =
-document.getElementById("game-list");
-
-const searchInput =
-document.getElementById("search");
-
-const statusElement =
-document.getElementById("status");
+const gameList = document.getElementById("game-list");
+const searchInput = document.getElementById("search");
+const statusElement = document.getElementById("status");
 
 let games = [];
 
@@ -100,24 +97,19 @@ for (let i = 0; i < csv.length; i++) {
 
 const char = csv[i];  
 
-
  /*  
   * Quotes  
   */  
  if (char === '"') {  
 
-     if (  
-         insideQuotes &&  
-         csv[i + 1] === '"'  
-     ) {  
+     if (insideQuotes && csv[i + 1] === '"') {  
 
          field += '"';  
          i++;  
 
      } else {  
 
-         insideQuotes =  
-             !insideQuotes;  
+         insideQuotes = !insideQuotes;  
      }  
 
      continue;  
@@ -127,10 +119,7 @@ const char = csv[i];
  /*  
   * Comma outside quotes  
   */  
- if (  
-     char === "," &&  
-     !insideQuotes  
- ) {  
+ if (char === "," && !insideQuotes) {  
 
      row.push(field);  
      field = "";  
@@ -148,7 +137,7 @@ const char = csv[i];
  ) {  
 
      /*  
-      * Handle CRLF.  
+      * Handle CRLF  
       */  
      if (  
          char === "\r" &&  
@@ -157,24 +146,19 @@ const char = csv[i];
          i++;  
      }  
 
-
      row.push(field);  
      field = "";  
-
 
      /*  
       * Avoid completely empty rows.  
       */  
      if (  
          row.some(  
-             value =>  
-                 value.trim() !== ""  
+             value => value.trim() !== ""  
          )  
      ) {  
-
          rows.push(row);  
      }  
-
 
      row = [];  
 
@@ -199,13 +183,10 @@ row.push(field);
 
 if (
 row.some(
-value =>
-value.trim() !== ""
+value => value.trim() !== ""
 )
 ) {
-
 rows.push(row);
-
 }
 }
 
@@ -218,8 +199,7 @@ return [];
 
 First row = headers.
 */
-const headers =
-rows.shift().map(
+const headers = rows.shift().map(
 normalizeHeader
 );
 
@@ -259,7 +239,6 @@ for (const name of possibleNames) {
 const normalizedName =  
      normalizeHeader(name);  
 
-
  if (  
      Object.prototype.hasOwnProperty.call(  
          row,  
@@ -280,15 +259,22 @@ return "";
 
 Convert CSV rows.
 
-Every row contains its own GAME and YEAR.
+GAME and YEAR can be merged in Google Sheets.
+
+When a row does not have GAME,
+
+the game from the previous row is inherited.
 */
 function processRows(rows) {
+
+let currentGame = "";
+let currentYear = "";
 
 const result = [];
 
 for (const row of rows) {
 
-const game =  
+const gameValue =  
      getColumn(row, [  
          "GAME",  
          "GAME NAME",  
@@ -297,7 +283,7 @@ const game =
      ]).trim();  
 
 
- const year =  
+ const yearValue =  
      getColumn(row, [  
          "YEAR",  
          "ANO",  
@@ -305,25 +291,51 @@ const game =
      ]).trim();  
 
 
+ /*  
+  * If we find a new game,  
+  * update the current game.  
+  */  
+ if (gameValue) {  
+     currentGame = gameValue;  
+ }  
+
+
+ /*  
+  * Same for the year.  
+  */  
+ if (yearValue) {  
+     currentYear = yearValue;  
+ }  
+
+
+ /*  
+  * Port-specific data.  
+  */  
  const project =  
      getColumn(row, [  
          "PROJECT",  
          "PROYECTO"  
-     ]).trim();  
+     ]);  
 
 
+ /*  
+  * LINK is the text displayed on the button.  
+  */  
  const link =  
      getColumn(row, [  
          "LINK",  
          "PROJECT LINK",  
          "ENLACE"  
-     ]).trim();  
+     ]);  
 
 
+ /*  
+  * URL is the actual destination.  
+  */  
  const url =  
      getColumn(row, [  
          "URL"  
-     ]).trim();  
+     ]);  
 
 
  const developer =  
@@ -331,14 +343,14 @@ const game =
          "DEVELOPER",  
          "DEVELOPER/PUBLISHER",  
          "DESARROLLADOR"  
-     ]).trim();  
+     ]);  
 
 
  const version =  
      getColumn(row, [  
          "VERSION",  
          "VERSIÓN"  
-     ]).trim();  
+     ]);  
 
 
  const controller =  
@@ -347,7 +359,7 @@ const game =
          "CONTROLLER",  
          "GAMEPAD",  
          "MANDO"  
-     ]).trim();  
+     ]);  
 
 
  const files =  
@@ -356,7 +368,7 @@ const game =
          "NEEDS GAME FILES",  
          "GAME FILES",  
          "NECESITA ARCHIVOS"  
-     ]).trim();  
+     ]);  
 
 
  const works =  
@@ -364,7 +376,7 @@ const game =
          "WORKS?",  
          "WORKS",  
          "FUNCIONA"  
-     ]).trim();  
+     ]);  
 
 
  const lastUpdate =  
@@ -372,7 +384,7 @@ const game =
          "LAST UPDATE",  
          "LAST UPDATED",  
          "ÚLTIMA ACTUALIZACIÓN"  
-     ]).trim();  
+     ]);  
 
 
  const notes =  
@@ -380,12 +392,12 @@ const game =
          "NOTES",  
          "NOTE",  
          "NOTAS"  
-     ]).trim();  
+     ]);  
 
 
  /*  
   * A row is considered a port when it has  
-  * a game and some port-specific data.  
+  * some project-specific data.  
   */  
  const hasPortData =  
      project ||  
@@ -401,7 +413,7 @@ const game =
 
 
  if (  
-     !game ||  
+     !currentGame ||  
      !hasPortData  
  ) {  
      continue;  
@@ -410,29 +422,29 @@ const game =
 
  result.push({  
 
-     game: game,  
+     game: currentGame,  
 
-     year: year,  
+     year: currentYear,  
 
-     project: project,  
+     project: project.trim(),  
 
-     link: link,  
+     link: link.trim(),  
 
-     url: url,  
+     url: url.trim(),  
 
-     developer: developer,  
+     developer: developer.trim(),  
 
-     version: version,  
+     version: version.trim(),  
 
-     controller: controller,  
+     controller: controller.trim(),  
 
-     files: files,  
+     files: files.trim(),  
 
-     works: works,  
+     works: works.trim(),  
 
-     lastUpdate: lastUpdate,  
+     lastUpdate: lastUpdate.trim(),  
 
-     notes: notes  
+     notes: notes.trim()  
 
  });
 
@@ -448,8 +460,7 @@ Group ports by game.
 */
 function groupGames(rows) {
 
-const grouped =
-new Map();
+const grouped = new Map();
 
 for (const port of rows) {
 
@@ -463,13 +474,8 @@ const key =
          key,  
          {  
              name: port.game,  
-
              year: port.year,  
-
-             slug: createSlug(  
-                 port.game  
-             ),  
-
+             slug: createSlug(port.game),  
              ports: []  
          }  
      );  
@@ -481,16 +487,14 @@ const key =
 
 
  /*  
-  * If the game already exists but  
-  * does not have a year, use this row.  
+  * If we find a year that we did not  
+  * have before, save it.  
   */  
  if (  
      !game.year &&  
      port.year  
  ) {  
-
-     game.year =  
-         port.year;  
+     game.year = port.year;  
  }  
 
 
@@ -520,10 +524,8 @@ gameList.innerHTML = `
      </div>  
  `;  
 
-
  statusElement.textContent =  
      "0 games";  
-
 
  return;
 
@@ -537,7 +539,12 @@ document.createDocumentFragment();
 
 for (const game of list) {
 
-const element =  
+/*  
+  * Each game points to:  
+  *  
+  * game.html?game=slug  
+  */  
+ const element =  
      document.createElement("a");  
 
 
@@ -570,24 +577,22 @@ const element =
 
 
  /*  
-  * Year.  
+  * Year  
   */  
  if (game.year) {  
 
      const span =  
          document.createElement("span");  
 
-
      span.textContent =  
          game.year;  
-
 
      info.appendChild(span);  
  }  
 
 
  /*  
-  * Number of ports.  
+  * Number of ports  
   */  
  const portCount =  
      document.createElement("span");  
@@ -601,7 +606,6 @@ const element =
 
 
  element.appendChild(name);  
-
  element.appendChild(info);  
 
 
@@ -620,9 +624,7 @@ Search.
 function searchGames() {
 
 const query =
-normalizeText(
-searchInput.value
-);
+normalizeText(searchInput.value);
 
 if (!query) {
 
@@ -638,24 +640,18 @@ games.filter(game => {
 const searchableText = [  
 
          game.name,  
-
          game.year,  
 
-         ...game.ports.map(  
-             port => [  
+         ...game.ports.map(port => [  
+             port.project,  
+             port.developer,  
+             port.version,  
+             port.notes  
+         ].join(" "))  
 
-                 port.project,  
-
-                 port.developer,  
-
-                 port.version,  
-
-                 port.notes  
-
-             ].join(" ")  
-         )  
-
-     ].join(" ");  
+     ]  
+         .join(" ")  
+         .toLowerCase();  
 
 
      return normalizeText(  
@@ -695,10 +691,7 @@ statusElement.textContent =
      await response.text();  
 
 
- if (  
-     !csv ||  
-     !csv.trim()  
- ) {  
+ if (!csv || !csv.trim()) {  
 
      throw new Error(  
          "Google Sheets returned an empty response."  
@@ -710,9 +703,7 @@ statusElement.textContent =
      parseCSV(csv);  
 
 
- if (  
-     rows.length === 0  
- ) {  
+ if (rows.length === 0) {  
 
      throw new Error(  
          "The sheet contains no data."  
@@ -724,9 +715,7 @@ statusElement.textContent =
      processRows(rows);  
 
 
- if (  
-     processedRows.length === 0  
- ) {  
+ if (processedRows.length === 0) {  
 
      throw new Error(  
          "No games or ports were found in the sheet."  
@@ -735,9 +724,7 @@ statusElement.textContent =
 
 
  games =  
-     groupGames(  
-         processedRows  
-     );  
+     groupGames(processedRows);  
 
 
  /*  
@@ -785,20 +772,16 @@ console.error(
 
 }
 }
-
-
 /*
-
-Search events.
-*/
+ * Search events.
+ */
 searchInput.addEventListener(
-"input",
-searchGames
+    "input",
+    searchGames
 );
 
 
 /*
-
-Start loading the games.
-*/
+ * Start loading the games.
+ */
 loadGames();
