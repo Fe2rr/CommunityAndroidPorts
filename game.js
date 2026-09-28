@@ -1223,4 +1223,72 @@ async function loadGame() {
          * Update browser title.
          */
         document.title =
-       
+        `${game.name} - Community Android Ports`;
+
+
+        /*
+         * Display game.
+         */
+        displayGame(
+            game,
+            processedRows
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "Could not load game:",
+            error
+        );
+
+
+        gameTitle.textContent =
+            "Error";
+
+
+        gameYear.textContent =
+            "";
+
+
+        statusElement.textContent =
+            "";
+
+
+        let message =
+            error.message;
+
+
+        /*
+         * Special message for a timeout.
+         */
+        if (
+            error.name === "AbortError"
+        ) {
+
+            message =
+                "Google Sheets did not respond within 15 seconds.";
+        }
+
+
+        portList.innerHTML = `
+            <div class="error">
+
+                <strong>
+                    Could not load the game.
+                </strong>
+
+                <br><br>
+
+                ${message}
+
+            </div>
+        `;
+    }
+}
+
+
+/*
+ * Start.
+ */
+loadGame();
