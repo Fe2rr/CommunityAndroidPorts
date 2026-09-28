@@ -677,10 +677,10 @@ function displayPlatformMenu() {
 
 
     /*
-     * Microsoft.
+     * Xbox.
      */
     addMenuSeparator(
-        "Microsoft"
+        "Xbox"
     );
 
 
