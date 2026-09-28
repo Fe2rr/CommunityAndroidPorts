@@ -15,7 +15,25 @@ const gameList = document.getElementById("game-list");
 const searchInput = document.getElementById("search");
 const statusElement = document.getElementById("status");
 
+const menuButton =
+    document.getElementById("menu-button");
+
+const menuClose =
+    document.getElementById("menu-close");
+
+const sideMenu =
+    document.getElementById("side-menu");
+
+const menuOverlay =
+    document.getElementById("menu-overlay");
+
+const platformList =
+    document.getElementById("platform-list");
+
+
 let games = [];
+
+let selectedPlatform = "";
 
 
 /*
@@ -48,14 +66,6 @@ function normalizeText(value) {
 /*
  * Convert the game name into an identifier
  * that can be used in the URL.
- *
- * Example:
- *
- * The Legend of Zelda: A Link to the Past
- *
- * ↓
- *
- * the-legend-of-zelda-a-link-to-the-past
  */
 function createSlug(name) {
 
@@ -67,12 +77,6 @@ function createSlug(name) {
 
 /*
  * Full CSV parser.
- *
- * Handles:
- *
- * - commas inside fields
- * - quotes
- * - line breaks inside fields
  */
 function parseCSV(csv) {
 
@@ -86,9 +90,6 @@ function parseCSV(csv) {
 
         const char = csv[i];
 
-        /*
-         * Quotes
-         */
         if (char === '"') {
 
             if (insideQuotes && csv[i + 1] === '"') {
@@ -105,9 +106,6 @@ function parseCSV(csv) {
         }
 
 
-        /*
-         * Comma outside quotes
-         */
         if (char === "," && !insideQuotes) {
 
             row.push(field);
@@ -117,17 +115,11 @@ function parseCSV(csv) {
         }
 
 
-        /*
-         * End of row
-         */
         if (
             (char === "\n" || char === "\r") &&
             !insideQuotes
         ) {
 
-            /*
-             * Handle CRLF
-             */
             if (
                 char === "\r" &&
                 csv[i + 1] === "\n"
@@ -138,9 +130,6 @@ function parseCSV(csv) {
             row.push(field);
             field = "";
 
-            /*
-             * Avoid completely empty rows.
-             */
             if (
                 row.some(
                     value => value.trim() !== ""
@@ -159,9 +148,6 @@ function parseCSV(csv) {
     }
 
 
-    /*
-     * Last field.
-     */
     if (
         field.length > 0 ||
         row.length > 0
@@ -184,17 +170,11 @@ function parseCSV(csv) {
     }
 
 
-    /*
-     * First row = headers.
-     */
     const headers = rows.shift().map(
         normalizeHeader
     );
 
 
-    /*
-     * Convert rows into objects.
-     */
     return rows.map(values => {
 
         const rowObject = {};
@@ -240,11 +220,6 @@ function getColumn(row, possibleNames) {
 
 /*
  * Convert CSV rows.
- *
- * GAME and YEAR can be merged in Google Sheets.
- *
- * When a row does not have GAME,
- * the game from the previous row is inherited.
  */
 function processRows(rows) {
 
@@ -273,21 +248,25 @@ function processRows(rows) {
             ]).trim();
 
 
-        /*
-         * If we find a new game,
-         * update the current game.
-         */
         if (gameValue) {
             currentGame = gameValue;
         }
 
 
-        /*
-         * Same for the year.
-         */
         if (yearValue) {
             currentYear = yearValue;
         }
+
+
+        /*
+         * Platform.
+         */
+        const platform =
+            getColumn(row, [
+                "PLATFORM",
+                "PLATAFORM",
+                "PLATAFORMA"
+            ]).trim();
 
 
         /*
@@ -300,9 +279,6 @@ function processRows(rows) {
             ]);
 
 
-        /*
-         * LINK is the text displayed on the button.
-         */
         const link =
             getColumn(row, [
                 "LINK",
@@ -311,9 +287,6 @@ function processRows(rows) {
             ]);
 
 
-        /*
-         * URL is the actual destination.
-         */
         const url =
             getColumn(row, [
                 "URL"
@@ -377,10 +350,6 @@ function processRows(rows) {
             ]);
 
 
-        /*
-         * A row is considered a port when it has
-         * some project-specific data.
-         */
         const hasPortData =
             project ||
             link ||
@@ -407,6 +376,8 @@ function processRows(rows) {
             game: currentGame,
 
             year: currentYear,
+
+            platform: platform,
 
             project: project.trim(),
 
@@ -458,7 +429,8 @@ function groupGames(rows) {
                     name: port.game,
                     year: port.year,
                     slug: createSlug(port.game),
-                    ports: []
+                    ports: [],
+                    platforms: new Set()
                 }
             );
         }
@@ -468,15 +440,19 @@ function groupGames(rows) {
             grouped.get(key);
 
 
-        /*
-         * If we find a year that we did not
-         * have before, save it.
-         */
         if (
             !game.year &&
             port.year
         ) {
             game.year = port.year;
+        }
+
+
+        if (port.platform) {
+
+            game.platforms.add(
+                port.platform
+            );
         }
 
 
@@ -486,7 +462,170 @@ function groupGames(rows) {
 
     return Array.from(
         grouped.values()
+    ).map(game => {
+
+        game.platforms =
+            Array.from(
+                game.platforms
+            );
+
+        return game;
+    });
+}
+
+
+/*
+ * Get all platforms used by the games.
+ */
+function getPlatforms() {
+
+    const platforms = new Map();
+
+
+    for (const game of games) {
+
+        for (const platform of game.platforms) {
+
+            const key =
+                normalizeText(platform);
+
+
+            if (!platforms.has(key)) {
+
+                platforms.set(
+                    key,
+                    platform
+                );
+            }
+        }
+    }
+
+
+    return Array.from(
+        platforms.values()
+    ).sort(
+        (a, b) =>
+            a.localeCompare(
+                b,
+                "en",
+                {
+                    sensitivity: "base"
+                }
+            )
     );
+}
+
+
+/*
+ * Open menu.
+ */
+function openMenu() {
+
+    sideMenu.classList.add("open");
+
+    menuOverlay.classList.add("open");
+}
+
+
+/*
+ * Close menu.
+ */
+function closeMenu() {
+
+    sideMenu.classList.remove("open");
+
+    menuOverlay.classList.remove("open");
+}
+
+
+/*
+ * Create platform menu.
+ */
+function displayPlatformMenu() {
+
+    platformList.innerHTML = "";
+
+
+    /*
+     * All Platforms.
+     */
+    const allButton =
+        document.createElement("button");
+
+
+    allButton.type =
+        "button";
+
+
+    allButton.className =
+        "platform-button";
+
+
+    allButton.textContent =
+        "All Platforms";
+
+
+    allButton.addEventListener(
+        "click",
+        () => {
+
+            selectedPlatform = "";
+
+            displayFilteredGames();
+
+            closeMenu();
+        }
+    );
+
+
+    platformList.appendChild(
+        allButton
+    );
+
+
+    /*
+     * Platforms from Google Sheets.
+     */
+    const platforms =
+        getPlatforms();
+
+
+    for (const platform of platforms) {
+
+        const button =
+            document.createElement("button");
+
+
+        button.type =
+            "button";
+
+
+        button.className =
+            "platform-button";
+
+
+        button.textContent =
+            platform;
+
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                selectedPlatform =
+                    platform;
+
+                displayFilteredGames();
+
+                closeMenu();
+            }
+        );
+
+
+        platformList.appendChild(
+            button
+        );
+    }
 }
 
 
@@ -523,11 +662,6 @@ function displayGames(list) {
 
     for (const game of list) {
 
-        /*
-         * Each game points to:
-         *
-         * game.html?game=slug
-         */
         const element =
             document.createElement("a");
 
@@ -560,9 +694,6 @@ function displayGames(list) {
             "game-info";
 
 
-        /*
-         * Year
-         */
         if (game.year) {
 
             const span =
@@ -575,9 +706,6 @@ function displayGames(list) {
         }
 
 
-        /*
-         * Number of ports
-         */
         const portCount =
             document.createElement("span");
 
@@ -586,40 +714,69 @@ function displayGames(list) {
             `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
 
 
-        info.appendChild(portCount);
+        info.appendChild(
+            portCount
+        );
 
 
-        element.appendChild(name);
-        element.appendChild(info);
+        element.appendChild(
+            name
+        );
+
+        element.appendChild(
+            info
+        );
 
 
-        fragment.appendChild(element);
+        fragment.appendChild(
+            element
+        );
     }
 
 
-    gameList.appendChild(fragment);
+    gameList.appendChild(
+        fragment
+    );
 }
 
 
 /*
- * Search.
+ * Filter games by search and platform.
  */
-function searchGames() {
+function displayFilteredGames() {
 
     const query =
-        normalizeText(searchInput.value);
-
-
-    if (!query) {
-
-        displayGames(games);
-
-        return;
-    }
+        normalizeText(
+            searchInput.value
+        );
 
 
     const filtered =
         games.filter(game => {
+
+            /*
+             * Platform filter.
+             */
+            if (
+                selectedPlatform &&
+                !game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        normalizeText(selectedPlatform)
+                )
+            ) {
+
+                return false;
+            }
+
+
+            /*
+             * Search filter.
+             */
+            if (!query) {
+                return true;
+            }
+
 
             const searchableText = [
 
@@ -627,10 +784,12 @@ function searchGames() {
                 game.year,
 
                 ...game.ports.map(port => [
+
                     port.project,
                     port.developer,
                     port.version,
                     port.notes
+
                 ].join(" "))
 
             ]
@@ -644,7 +803,18 @@ function searchGames() {
         });
 
 
-    displayGames(filtered);
+    displayGames(
+        filtered
+    );
+}
+
+
+/*
+ * Search.
+ */
+function searchGames() {
+
+    displayFilteredGames();
 }
 
 
@@ -710,7 +880,15 @@ async function loadGames() {
         );
 
 
-        displayGames(games);
+        /*
+         * Create Categories menu.
+         */
+        displayPlatformMenu();
+
+
+        displayGames(
+            games
+        );
 
 
     } catch (error) {
@@ -745,6 +923,27 @@ async function loadGames() {
 searchInput.addEventListener(
     "input",
     searchGames
+);
+
+
+/*
+ * Menu events.
+ */
+menuButton.addEventListener(
+    "click",
+    openMenu
+);
+
+
+menuClose.addEventListener(
+    "click",
+    closeMenu
+);
+
+
+menuOverlay.addEventListener(
+    "click",
+    closeMenu
 );
 
 
