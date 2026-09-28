@@ -292,6 +292,17 @@ function processRows(rows) {
 
 
         /*
+         * PLATFORM.
+         */
+        const platform =
+            getColumn(row, [
+                "PLATFORM",
+                "PLATAFORM",
+                "PLATAFORMA"
+            ]);
+
+
+        /*
          * Project name.
          */
         const project =
@@ -410,6 +421,8 @@ function processRows(rows) {
 
             year: currentYear,
 
+            platform: platform.trim(),
+
             project: project.trim(),
 
             link: link.trim(),
@@ -507,9 +520,209 @@ function createInfoRow(
 
 
 /*
+ * Check whether the selected entry is
+ * a Multi-game App.
+ */
+function isMultiGameApp(game) {
+
+    return game.ports.some(
+        port =>
+            normalizeText(port.platform) ===
+            "multi-game apps"
+    );
+}
+
+
+/*
+ * Find games that use this Multi-game App.
+ *
+ * A game uses the app when its PROJECT
+ * matches the app name.
+ */
+function findGamesUsingApp(
+    appName,
+    allRows
+) {
+
+    const appNameNormalized =
+        normalizeText(appName);
+
+
+    const gamesUsingApp =
+        new Map();
+
+
+    for (const row of allRows) {
+
+        if (
+            !row.game ||
+            !row.project
+        ) {
+            continue;
+        }
+
+
+        /*
+         * Do not include the app itself.
+         */
+        if (
+            normalizeText(row.game) ===
+            appNameNormalized
+        ) {
+            continue;
+        }
+
+
+        /*
+         * PROJECT must match the app name.
+         */
+        if (
+            normalizeText(row.project) !==
+            appNameNormalized
+        ) {
+            continue;
+        }
+
+
+        const key =
+            normalizeText(row.game);
+
+
+        if (
+            !gamesUsingApp.has(key)
+        ) {
+
+            gamesUsingApp.set(
+                key,
+                {
+                    name: row.game,
+                    year: row.year
+                }
+            );
+        }
+    }
+
+
+    return Array.from(
+        gamesUsingApp.values()
+    ).sort(
+        (a, b) =>
+            a.name.localeCompare(
+                b.name,
+                "en",
+                {
+                    sensitivity: "base"
+                }
+            )
+    );
+}
+
+
+/*
+ * Display the list of games that use
+ * a Multi-game App.
+ */
+function displayGamesUsingApp(
+    appName,
+    allRows
+) {
+
+    const gamesUsingApp =
+        findGamesUsingApp(
+            appName,
+            allRows
+        );
+
+
+    if (
+        gamesUsingApp.length === 0
+    ) {
+        return;
+    }
+
+
+    const section =
+        document.createElement("section");
+
+
+    section.className =
+        "games-using-app";
+
+
+    const title =
+        document.createElement("h2");
+
+
+    title.textContent =
+        "Games using this app";
+
+
+    section.appendChild(title);
+
+
+    const list =
+        document.createElement("div");
+
+
+    list.className =
+        "games-using-app-list";
+
+
+    for (
+        const game
+        of gamesUsingApp
+    ) {
+
+        const link =
+            document.createElement("a");
+
+
+        link.className =
+            "games-using-app-item";
+
+
+        link.href =
+            `game.html?game=${encodeURIComponent(
+                createSlug(game.name)
+            )}`;
+
+
+        link.textContent =
+            game.name;
+
+
+        if (game.year) {
+
+            const year =
+                document.createElement("span");
+
+
+            year.textContent =
+                ` (${game.year})`;
+
+
+            link.appendChild(year);
+        }
+
+
+        list.appendChild(link);
+    }
+
+
+    section.appendChild(list);
+
+
+    portList.appendChild(section);
+}
+
+
+/*
  * Display the selected game.
  */
-function displayGame(game) {
+function displayGame(
+    game,
+    allRows
+) {
 
     gameTitle.textContent =
         game.name;
@@ -688,6 +901,21 @@ function displayGame(game) {
 
         portList.appendChild(card);
     }
+
+
+    /*
+     * If this is a Multi-game App,
+     * display the games that use it.
+     */
+    if (
+        isMultiGameApp(game)
+    ) {
+
+        displayGamesUsingApp(
+            game.name,
+            allRows
+        );
+    }
 }
 
 
@@ -858,7 +1086,10 @@ async function loadGame() {
         /*
          * Display game.
          */
-        displayGame(game);
+        displayGame(
+            game,
+            processedRows
+        );
 
 
     } catch (error) {
