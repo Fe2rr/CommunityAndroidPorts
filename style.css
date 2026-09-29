@@ -701,3 +701,20 @@ footer {
 .games-using-app-list[hidden] {
     display: none;
 }
+.game-files-link {
+    margin-top: 30px;
+
+    text-align: center;
+
+    color: #aaaaaa;
+}
+
+.game-files-link a {
+    color: #cccccc;
+
+    text-decoration: underline;
+}
+
+.game-files-link a:hover {
+    color: #ffffff;
+}
