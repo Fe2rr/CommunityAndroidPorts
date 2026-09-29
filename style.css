@@ -575,6 +575,8 @@ footer {
 
     color: #ffffff;
 }
+
+
 /* MENU SEPARATORS */
 
 .menu-separator {
@@ -595,33 +597,104 @@ footer {
     border-top:
         1px solid #303030;
 }
+
+
+/* GAMES USING APP */
+
 .games-using-app {
     margin-top: 30px;
 }
 
-.games-using-app h2 {
-    margin-bottom: 12px;
+
+/* COLLAPSIBLE HEADER */
+
+.games-using-app-toggle {
+    width: 100%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    padding:
+        12px 14px;
+
+    background: #181818;
+
+    border:
+        1px solid #303030;
+
+    border-radius: 6px;
+
+    color: #ffffff;
+
+    text-align: left;
+
+    font-size: 15px;
+
+    font-weight: bold;
+
+    cursor: pointer;
+
+    transition:
+        background 0.15s,
+        border-color 0.15s;
 }
+
+.games-using-app-toggle:hover {
+    background: #252525;
+
+    border-color: #444444;
+}
+
+
+/* ARROW */
+
+.games-using-app-arrow {
+    margin-left: 10px;
+
+    color: #aaaaaa;
+
+    font-size: 13px;
+}
+
+
+/* GAME LIST */
 
 .games-using-app-list {
     display: flex;
+
     flex-direction: column;
+
     gap: 6px;
+
+    margin-top: 8px;
 }
+
+
+/* GAME LINKS */
 
 .games-using-app-item {
     display: block;
-    padding: 10px 12px;
+
+    padding:
+        10px 12px;
 
     background: #181818;
-    border: 1px solid #303030;
+
+    border:
+        1px solid #303030;
+
     border-radius: 6px;
 
     color: #cccccc;
+
     text-decoration: none;
 }
 
 .games-using-app-item:hover {
     background: #252525;
+
     color: #ffffff;
 }
