@@ -698,3 +698,6 @@ footer {
 
     color: #ffffff;
 }
+.games-using-app-list[hidden] {
+    display: none;
+}
