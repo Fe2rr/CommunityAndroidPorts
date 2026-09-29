@@ -718,3 +718,14 @@ footer {
 .game-files-link a:hover {
     color: #ffffff;
 }
+.header-link {
+    display: block;
+
+    color: inherit;
+
+    text-decoration: none;
+}
+
+.header-link:hover {
+    color: inherit;
+}
