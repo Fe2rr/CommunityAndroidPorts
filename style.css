@@ -270,8 +270,9 @@ main {
     color: #999999;
 
     min-width: 190px;
-}
 
+    text-transform: uppercase;
+}
 .port-info-value {
     color: #dddddd;
 }
