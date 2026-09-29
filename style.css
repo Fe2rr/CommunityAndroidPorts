@@ -698,9 +698,14 @@ footer {
 
     color: #ffffff;
 }
+
 .games-using-app-list[hidden] {
     display: none;
 }
+
+
+/* GAME FILES LINK */
+
 .game-files-link {
     margin-top: 30px;
 
@@ -718,14 +723,38 @@ footer {
 .game-files-link a:hover {
     color: #ffffff;
 }
+
+
+/* CLICKABLE HEADER */
+
 .header-link {
     display: block;
 
-    color: inherit;
+    color: #eeeeee;
 
     text-decoration: none;
 }
 
 .header-link:hover {
-    color: inherit;
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link:visited {
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link:active {
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link h1 {
+    color: #ffffff;
+
+    text-decoration: none;
 }
