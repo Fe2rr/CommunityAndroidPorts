@@ -681,23 +681,63 @@ function displayGamesUsingApp(
         "games-using-app";
 
 
+    /*
+     * Collapsible header.
+     */
+    const toggle =
+        document.createElement("button");
+
+
+    toggle.type =
+        "button";
+
+
+    toggle.className =
+        "games-using-app-toggle";
+
+
+    toggle.setAttribute(
+        "aria-expanded",
+        "false"
+    );
+
+
     const title =
-        document.createElement("h2");
+        document.createElement("span");
 
 
     title.textContent =
         "With this port you can also play:";
 
 
-    section.appendChild(title);
+    const arrow =
+        document.createElement("span");
 
 
+    arrow.className =
+        "games-using-app-arrow";
+
+
+    arrow.textContent =
+        "▼";
+
+
+    toggle.appendChild(title);
+    toggle.appendChild(arrow);
+
+
+    /*
+     * Game list.
+     */
     const list =
         document.createElement("div");
 
 
     list.className =
         "games-using-app-list";
+
+
+    list.hidden = true;
 
 
     for (
@@ -741,6 +781,38 @@ function displayGamesUsingApp(
     }
 
 
+    /*
+     * Toggle open / closed.
+     */
+    toggle.addEventListener(
+        "click",
+        () => {
+
+            const isOpen =
+                toggle.getAttribute(
+                    "aria-expanded"
+                ) === "true";
+
+
+            toggle.setAttribute(
+                "aria-expanded",
+                String(!isOpen)
+            );
+
+
+            list.hidden =
+                isOpen;
+
+
+            arrow.textContent =
+                isOpen
+                    ? "▼"
+                    : "▲";
+        }
+    );
+
+
+    section.appendChild(toggle);
     section.appendChild(list);
 
 
@@ -989,23 +1061,63 @@ function displayGame(
                 "games-using-app";
 
 
+            /*
+             * Collapsible header.
+             */
+            const toggle =
+                document.createElement("button");
+
+
+            toggle.type =
+                "button";
+
+
+            toggle.className =
+                "games-using-app-toggle";
+
+
+            toggle.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+
             const title =
-                document.createElement("h2");
+                document.createElement("span");
 
 
             title.textContent =
                 "Games using this app";
 
 
-            section.appendChild(title);
+            const arrow =
+                document.createElement("span");
 
 
+            arrow.className =
+                "games-using-app-arrow";
+
+
+            arrow.textContent =
+                "▼";
+
+
+            toggle.appendChild(title);
+            toggle.appendChild(arrow);
+
+
+            /*
+             * Game list.
+             */
             const list =
                 document.createElement("div");
 
 
             list.className =
                 "games-using-app-list";
+
+
+            list.hidden = true;
 
 
             for (
@@ -1053,6 +1165,38 @@ function displayGame(
             }
 
 
+            /*
+             * Toggle open / closed.
+             */
+            toggle.addEventListener(
+                "click",
+                () => {
+
+                    const isOpen =
+                        toggle.getAttribute(
+                            "aria-expanded"
+                        ) === "true";
+
+
+                    toggle.setAttribute(
+                        "aria-expanded",
+                        String(!isOpen)
+                    );
+
+
+                    list.hidden =
+                        isOpen;
+
+
+                    arrow.textContent =
+                        isOpen
+                            ? "▼"
+                            : "▲";
+                }
+            );
+
+
+            section.appendChild(toggle);
             section.appendChild(list);
 
 
@@ -1223,7 +1367,7 @@ async function loadGame() {
          * Update browser title.
          */
         document.title =
-        `${game.name} - Community Android Ports`;
+            `${game.name} - Community Android Ports`;
 
 
         /*
