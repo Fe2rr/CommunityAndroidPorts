@@ -270,8 +270,9 @@ main {
     color: #999999;
 
     min-width: 190px;
-}
 
+    text-transform: uppercase;
+}
 .port-info-value {
     color: #dddddd;
 }
@@ -698,9 +699,14 @@ footer {
 
     color: #ffffff;
 }
+
 .games-using-app-list[hidden] {
     display: none;
 }
+
+
+/* GAME FILES LINK */
+
 .game-files-link {
     margin-top: 30px;
 
@@ -717,4 +723,39 @@ footer {
 
 .game-files-link a:hover {
     color: #ffffff;
+}
+
+
+/* CLICKABLE HEADER */
+
+.header-link {
+    display: block;
+
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link:hover {
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link:visited {
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link:active {
+    color: #eeeeee;
+
+    text-decoration: none;
+}
+
+.header-link h1 {
+    color: #ffffff;
+
+    text-decoration: none;
 }

@@ -897,11 +897,11 @@ function displayGame(
 
             ["Version", port.version],
 
-            ["Controller Support", port.controller],
+            ["Supported Inputs", port.controller],
 
-            ["Needs Original Files", port.files],
+            ["Needs Game Files?", port.files],
 
-            ["Works", port.works],
+            ["Works?", port.works],
 
             ["Last Update", port.lastUpdate]
 
