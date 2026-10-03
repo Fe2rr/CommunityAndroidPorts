@@ -17,6 +17,12 @@ const gameList =
 const searchInput =
     document.getElementById("search");
 
+const searchContainer =
+    document.getElementById("search-container");
+
+const searchButton =
+    document.getElementById("search-button");
+
 const statusElement =
     document.getElementById("status");
 
@@ -524,6 +530,8 @@ function isDualScreen(game) {
  */
 function openMenu() {
 
+    closeSearch();
+
     sideMenu.classList.add("open");
 
     menuOverlay.classList.add("open");
@@ -539,6 +547,115 @@ function closeMenu() {
 
     menuOverlay.classList.remove("open");
 }
+
+
+/*
+ * Open / close search.
+ */
+function toggleSearch() {
+
+    const isHidden =
+        searchContainer.hasAttribute(
+            "hidden"
+        );
+
+
+    if (isHidden) {
+
+        searchContainer.removeAttribute(
+            "hidden"
+        );
+
+        searchInput.focus();
+
+    } else {
+
+        closeSearch();
+    }
+}
+
+
+/*
+ * Close search.
+ */
+function closeSearch() {
+
+    if (
+        searchContainer.hasAttribute(
+            "hidden"
+        )
+    ) {
+
+        return;
+    }
+
+
+    searchContainer.setAttribute(
+        "hidden",
+        ""
+    );
+
+
+    searchInput.value = "";
+
+
+    displayFilteredGames();
+}
+
+
+/*
+ * Close search when clicking outside it.
+ */
+document.addEventListener(
+    "click",
+    event => {
+
+        if (
+            searchContainer.hasAttribute(
+                "hidden"
+            )
+        ) {
+
+            return;
+        }
+
+
+        const clickedInsideSearch =
+            searchContainer.contains(
+                event.target
+            );
+
+
+        const clickedSearchButton =
+            searchButton.contains(
+                event.target
+            );
+
+
+        if (
+            !clickedInsideSearch &&
+            !clickedSearchButton
+        ) {
+
+            closeSearch();
+        }
+    }
+);
+
+
+/*
+ * Close search when scrolling.
+ */
+window.addEventListener(
+    "scroll",
+    () => {
+
+        closeSearch();
+    },
+    {
+        passive: true
+    }
+);
 
 
 /*
@@ -1208,6 +1325,20 @@ async function loadGames() {
 searchInput.addEventListener(
     "input",
     searchGames
+);
+
+
+/*
+ * Search button.
+ */
+searchButton.addEventListener(
+    "click",
+    event => {
+
+        event.stopPropagation();
+
+        toggleSearch();
+    }
 );
 
 
