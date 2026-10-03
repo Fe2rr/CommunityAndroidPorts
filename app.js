@@ -23,6 +23,9 @@ const searchContainer =
 const searchButton =
     document.getElementById("search-button");
 
+const homeButton =
+    document.getElementById("home-button");
+
 const statusElement =
     document.getElementById("status");
 
@@ -656,6 +659,29 @@ window.addEventListener(
         passive: true
     }
 );
+
+
+/*
+ * Return to Home.
+ */
+function goHome() {
+
+    selectedPlatform = "";
+
+    selectedCategory = "";
+
+    searchInput.value = "";
+
+    gameList.innerHTML = "";
+
+    gameList.hidden = true;
+
+    statusElement.textContent = "";
+
+    closeSearch();
+
+    closeMenu();
+}
 
 
 /*
@@ -1339,6 +1365,15 @@ searchButton.addEventListener(
 
         toggleSearch();
     }
+);
+
+
+/*
+ * Home button.
+ */
+homeButton.addEventListener(
+    "click",
+    goHome
 );
 
 
