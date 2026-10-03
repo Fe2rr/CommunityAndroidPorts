@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,20 +14,39 @@
 
 <header>
 
-    <button id="menu-button" type="button">
+    <button
+        id="menu-button"
+        type="button"
+        aria-label="Open menu"
+    >
         ☰
     </button>
 
-    <h1>Community Android Ports</h1>
-    <p>List of Native Android ports made by the Community</p>
+    <h1>
+        Community Android Ports
+    </h1>
+
+    <button
+        id="search-button"
+        type="button"
+        aria-label="Open search"
+    >
+        🔍
+    </button>
 
 </header>
 
+
 <div id="menu-overlay"></div>
+
 
 <nav id="side-menu">
 
-    <button id="menu-close" type="button">
+    <button
+        id="menu-close"
+        type="button"
+        aria-label="Close menu"
+    >
         ×
     </button>
 
@@ -36,9 +56,14 @@
 
 </nav>
 
+
 <main>
 
-    <div class="search-container">
+    <div
+        id="search-container"
+        class="search-container"
+        hidden
+    >
         <input
             type="text"
             id="search"
@@ -47,14 +72,19 @@
         >
     </div>
 
+
     <div id="status">
         Loading games...
     </div>
 
+
     <div id="game-list"></div>
 
+
     <p class="game-files-link">
+
         Game files available
+
         <a
             href="https://docs.google.com/spreadsheets/d/1wXlykMGC7rQCgebOkA4Awtd4wN9nMHCTkZUFf4KHQ-k/edit?usp=drivesdk"
             target="_blank"
@@ -62,13 +92,20 @@
         >
             here
         </a>
+
     </p>
 
 </main>
 
+
 <footer>
-    <p>Community Android Ports</p>
+
+    <p>
+        Community Android Ports
+    </p>
+
 </footer>
+
 
 <script src="app.js"></script>
 
