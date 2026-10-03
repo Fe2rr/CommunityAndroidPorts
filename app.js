@@ -17,15 +17,8 @@ const gameList =
 const searchInput =
     document.getElementById("search");
 
-const searchContainer =
-    document.getElementById("search-container");
-
-const searchButton =
-    document.getElementById("search-button");
-
 const statusElement =
     document.getElementById("status");
-
 
 const menuButton =
     document.getElementById("menu-button");
@@ -41,6 +34,9 @@ const menuOverlay =
 
 const platformList =
     document.getElementById("platform-list");
+
+const allGamesButton =
+    document.getElementById("all-games-button");
 
 
 let games = [];
@@ -100,9 +96,11 @@ function parseCSV(csv) {
     let field = "";
     let insideQuotes = false;
 
+
     for (let i = 0; i < csv.length; i++) {
 
         const char = csv[i];
+
 
         if (char === '"') {
 
@@ -117,8 +115,7 @@ function parseCSV(csv) {
 
             } else {
 
-                insideQuotes =
-                    !insideQuotes;
+                insideQuotes = !insideQuotes;
             }
 
             continue;
@@ -147,13 +144,14 @@ function parseCSV(csv) {
                 char === "\r" &&
                 csv[i + 1] === "\n"
             ) {
-
                 i++;
             }
+
 
             row.push(field);
 
             field = "";
+
 
             if (
                 row.some(
@@ -164,6 +162,7 @@ function parseCSV(csv) {
 
                 rows.push(row);
             }
+
 
             row = [];
 
@@ -182,6 +181,7 @@ function parseCSV(csv) {
 
         row.push(field);
 
+
         if (
             row.some(
                 value =>
@@ -195,7 +195,6 @@ function parseCSV(csv) {
 
 
     if (rows.length === 0) {
-
         return [];
     }
 
@@ -210,6 +209,7 @@ function parseCSV(csv) {
 
         const rowObject = {};
 
+
         headers.forEach(
             (header, index) => {
 
@@ -219,6 +219,7 @@ function parseCSV(csv) {
             }
         );
 
+
         return rowObject;
     });
 }
@@ -227,12 +228,16 @@ function parseCSV(csv) {
 /*
  * Find a column.
  */
-function getColumn(row, possibleNames) {
+function getColumn(
+    row,
+    possibleNames
+) {
 
     for (const name of possibleNames) {
 
         const normalizedName =
             normalizeHeader(name);
+
 
         if (
             Object.prototype.hasOwnProperty.call(
@@ -244,6 +249,7 @@ function getColumn(row, possibleNames) {
             return row[normalizedName];
         }
     }
+
 
     return "";
 }
@@ -281,22 +287,15 @@ function processRows(rows) {
 
 
         if (gameValue) {
-
-            currentGame =
-                gameValue;
+            currentGame = gameValue;
         }
 
 
         if (yearValue) {
-
-            currentYear =
-                yearValue;
+            currentYear = yearValue;
         }
 
 
-        /*
-         * Platform.
-         */
         const platform =
             getColumn(row, [
                 "PLATFORM",
@@ -305,9 +304,6 @@ function processRows(rows) {
             ]).trim();
 
 
-        /*
-         * Port-specific data.
-         */
         const project =
             getColumn(row, [
                 "PROJECT",
@@ -403,7 +399,6 @@ function processRows(rows) {
             !currentGame ||
             !hasPortData
         ) {
-
             continue;
         }
 
@@ -464,18 +459,10 @@ function groupGames(rows) {
                 key,
                 {
                     name: port.game,
-
                     year: port.year,
-
-                    slug:
-                        createSlug(
-                            port.game
-                        ),
-
+                    slug: createSlug(port.game),
                     ports: [],
-
-                    platforms:
-                        new Set()
+                    platforms: new Set()
                 }
             );
         }
@@ -489,9 +476,7 @@ function groupGames(rows) {
             !game.year &&
             port.year
         ) {
-
-            game.year =
-                port.year;
+            game.year = port.year;
         }
 
 
@@ -503,9 +488,7 @@ function groupGames(rows) {
         }
 
 
-        game.ports.push(
-            port
-        );
+        game.ports.push(port);
     }
 
 
@@ -530,11 +513,8 @@ function isDualScreen(game) {
 
     return game.ports.some(
         port =>
-            normalizeText(
-                port.project
-            ).includes(
-                "dual screen"
-            )
+            normalizeText(port.project)
+                .includes("dual screen")
     );
 }
 
@@ -544,15 +524,9 @@ function isDualScreen(game) {
  */
 function openMenu() {
 
-    closeSearch();
+    sideMenu.classList.add("open");
 
-    sideMenu.classList.add(
-        "open"
-    );
-
-    menuOverlay.classList.add(
-        "open"
-    );
+    menuOverlay.classList.add("open");
 }
 
 
@@ -561,123 +535,29 @@ function openMenu() {
  */
 function closeMenu() {
 
-    sideMenu.classList.remove(
-        "open"
-    );
+    sideMenu.classList.remove("open");
 
-    menuOverlay.classList.remove(
-        "open"
-    );
+    menuOverlay.classList.remove("open");
 }
 
 
 /*
- * Open / close search.
+ * Show All Games.
  */
-function toggleSearch() {
+function showAllGames() {
 
-    const isHidden =
-        searchContainer.hasAttribute(
-            "hidden"
-        );
+    selectedPlatform = "";
 
-
-    if (isHidden) {
-
-        searchContainer.removeAttribute(
-            "hidden"
-        );
-
-        searchInput.focus();
-
-    } else {
-
-        closeSearch();
-    }
-}
-
-
-/*
- * Close search.
- */
-function closeSearch() {
-
-    if (
-        searchContainer.hasAttribute(
-            "hidden"
-        )
-    ) {
-
-        return;
-    }
-
-
-    searchContainer.setAttribute(
-        "hidden",
-        ""
-    );
-
+    selectedCategory = "";
 
     searchInput.value = "";
 
+    gameList.hidden = false;
 
     displayFilteredGames();
+
+    closeMenu();
 }
-
-
-/*
- * Close search when clicking outside it.
- */
-document.addEventListener(
-    "click",
-    event => {
-
-        if (
-            searchContainer.hasAttribute(
-                "hidden"
-            )
-        ) {
-
-            return;
-        }
-
-
-        const clickedInsideSearch =
-            searchContainer.contains(
-                event.target
-            );
-
-
-        const clickedSearchButton =
-            searchButton.contains(
-                event.target
-            );
-
-
-        if (
-            !clickedInsideSearch &&
-            !clickedSearchButton
-        ) {
-
-            closeSearch();
-        }
-    }
-);
-
-
-/*
- * Close search when scrolling.
- */
-window.addEventListener(
-    "scroll",
-    () => {
-
-        closeSearch();
-    },
-    {
-        passive: true
-    }
-);
 
 
 /*
@@ -692,18 +572,20 @@ function displayPlatformMenu() {
      * All Categories.
      */
     const allButton =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
+
 
     allButton.type =
         "button";
 
+
     allButton.className =
         "platform-button";
 
+
     allButton.textContent =
         "All Categories";
+
 
     allButton.addEventListener(
         "click",
@@ -719,6 +601,7 @@ function displayPlatformMenu() {
         }
     );
 
+
     platformList.appendChild(
         allButton
     );
@@ -728,18 +611,20 @@ function displayPlatformMenu() {
      * Multi-game Apps.
      */
     const multiGameButton =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
+
 
     multiGameButton.type =
         "button";
 
+
     multiGameButton.className =
         "platform-button";
 
+
     multiGameButton.textContent =
         "Multi-game Apps";
+
 
     multiGameButton.addEventListener(
         "click",
@@ -756,6 +641,7 @@ function displayPlatformMenu() {
         }
     );
 
+
     platformList.appendChild(
         multiGameButton
     );
@@ -765,18 +651,20 @@ function displayPlatformMenu() {
      * Dual Screen.
      */
     const dualScreenButton =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
+
 
     dualScreenButton.type =
         "button";
 
+
     dualScreenButton.className =
         "platform-button";
 
+
     dualScreenButton.textContent =
         "Dual Screen";
+
 
     dualScreenButton.addEventListener(
         "click",
@@ -792,6 +680,7 @@ function displayPlatformMenu() {
             closeMenu();
         }
     );
+
 
     platformList.appendChild(
         dualScreenButton
@@ -810,29 +699,36 @@ function displayPlatformMenu() {
         "NES"
     );
 
+
     addPlatformButton(
         "Super Nintendo"
     );
+
 
     addPlatformButton(
         "Nintendo 64"
     );
 
+
     addPlatformButton(
         "GameCube / Wii"
     );
+
 
     addPlatformButton(
         "Gameboy / Gameboy Color"
     );
 
+
     addPlatformButton(
         "Gameboy Advance"
     );
 
+
     addPlatformButton(
         "Nintendo DS"
     );
+
 
     addPlatformButton(
         "Nintendo 3DS"
@@ -851,6 +747,7 @@ function displayPlatformMenu() {
         "Playstation"
     );
 
+
     addPlatformButton(
         "Playstation Portable"
     );
@@ -867,6 +764,7 @@ function displayPlatformMenu() {
     addPlatformButton(
         "Xbox"
     );
+
 
     addPlatformButton(
         "Xbox 360"
@@ -893,15 +791,16 @@ function displayPlatformMenu() {
 function addMenuSeparator(title) {
 
     const separator =
-        document.createElement(
-            "div"
-        );
+        document.createElement("div");
+
 
     separator.className =
         "menu-separator";
 
+
     separator.textContent =
         "── " + title + " ──";
+
 
     platformList.appendChild(
         separator
@@ -915,18 +814,20 @@ function addMenuSeparator(title) {
 function addPlatformButton(platform) {
 
     const button =
-        document.createElement(
-            "button"
-        );
+        document.createElement("button");
+
 
     button.type =
         "button";
 
+
     button.className =
         "platform-button";
 
+
     button.textContent =
         platform;
+
 
     button.addEventListener(
         "click",
@@ -943,6 +844,7 @@ function addPlatformButton(platform) {
         }
     );
 
+
     platformList.appendChild(
         button
     );
@@ -953,6 +855,8 @@ function addPlatformButton(platform) {
  * Display games.
  */
 function displayGames(list) {
+
+    gameList.hidden = false;
 
     gameList.innerHTML = "";
 
@@ -965,19 +869,17 @@ function displayGames(list) {
             </div>
         `;
 
+
         statusElement.textContent =
             "0 games";
+
 
         return;
     }
 
 
     statusElement.textContent =
-        `${list.length} game${
-            list.length !== 1
-                ? "s"
-                : ""
-        }`;
+        `${list.length} game${list.length !== 1 ? "s" : ""}`;
 
 
     const fragment =
@@ -987,9 +889,7 @@ function displayGames(list) {
     for (const game of list) {
 
         const element =
-            document.createElement(
-                "a"
-            );
+            document.createElement("a");
 
 
         element.className =
@@ -997,17 +897,11 @@ function displayGames(list) {
 
 
         element.href =
-            `game.html?game=${
-                encodeURIComponent(
-                    game.slug
-                )
-            }`;
+            `game.html?game=${encodeURIComponent(game.slug)}`;
 
 
         const name =
-            document.createElement(
-                "h2"
-            );
+            document.createElement("h2");
 
 
         name.className =
@@ -1019,9 +913,7 @@ function displayGames(list) {
 
 
         const info =
-            document.createElement(
-                "div"
-            );
+            document.createElement("div");
 
 
         info.className =
@@ -1031,12 +923,12 @@ function displayGames(list) {
         if (game.year) {
 
             const span =
-                document.createElement(
-                    "span"
-                );
+                document.createElement("span");
+
 
             span.textContent =
                 game.year;
+
 
             info.appendChild(
                 span
@@ -1045,17 +937,11 @@ function displayGames(list) {
 
 
         const portCount =
-            document.createElement(
-                "span"
-            );
+            document.createElement("span");
 
 
         portCount.textContent =
-            `${game.ports.length} port${
-                game.ports.length !== 1
-                    ? "s"
-                    : ""
-            }`;
+            `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
 
 
         info.appendChild(
@@ -1066,6 +952,7 @@ function displayGames(list) {
         element.appendChild(
             name
         );
+
 
         element.appendChild(
             info
@@ -1103,13 +990,10 @@ function displayFilteredGames() {
              * All Categories.
              */
             if (
-                selectedCategory !==
-                    "multi-game-apps" &&
+                selectedCategory !== "multi-game-apps" &&
                 game.platforms.some(
                     platform =>
-                        normalizeText(
-                            platform
-                        ) ===
+                        normalizeText(platform) ===
                         "multi-game apps"
                 )
             ) {
@@ -1122,13 +1006,10 @@ function displayFilteredGames() {
              * Multi-game Apps category.
              */
             if (
-                selectedCategory ===
-                    "multi-game-apps" &&
+                selectedCategory === "multi-game-apps" &&
                 !game.platforms.some(
                     platform =>
-                        normalizeText(
-                            platform
-                        ) ===
+                        normalizeText(platform) ===
                         "multi-game apps"
                 )
             ) {
@@ -1141,8 +1022,7 @@ function displayFilteredGames() {
              * Dual Screen category.
              */
             if (
-                selectedCategory ===
-                    "dual-screen" &&
+                selectedCategory === "dual-screen" &&
                 !isDualScreen(game)
             ) {
 
@@ -1157,12 +1037,8 @@ function displayFilteredGames() {
                 selectedPlatform &&
                 !game.platforms.some(
                     platform =>
-                        normalizeText(
-                            platform
-                        ) ===
-                        normalizeText(
-                            selectedPlatform
-                        )
+                        normalizeText(platform) ===
+                        normalizeText(selectedPlatform)
                 )
             ) {
 
@@ -1174,7 +1050,6 @@ function displayFilteredGames() {
              * Search filter.
              */
             if (!query) {
-
                 return true;
             }
 
@@ -1185,19 +1060,17 @@ function displayFilteredGames() {
 
                 game.year,
 
-                ...game.ports.map(
-                    port => [
+                ...game.ports.map(port => [
 
-                        port.project,
+                    port.project,
 
-                        port.developer,
+                    port.developer,
 
-                        port.version,
+                    port.version,
 
-                        port.notes
+                    port.notes
 
-                    ].join(" ")
-                )
+                ].join(" "))
 
             ]
                 .join(" ")
@@ -1206,9 +1079,7 @@ function displayFilteredGames() {
 
             return normalizeText(
                 searchableText
-            ).includes(
-                query
-            );
+            ).includes(query);
         });
 
 
@@ -1239,9 +1110,7 @@ async function loadGames() {
 
 
         const response =
-            await fetch(
-                SHEET_URL
-            );
+            await fetch(SHEET_URL);
 
 
         if (!response.ok) {
@@ -1273,9 +1142,7 @@ async function loadGames() {
 
 
         games =
-            groupGames(
-                processedRows
-            );
+            groupGames(processedRows);
 
 
         /*
@@ -1287,8 +1154,7 @@ async function loadGames() {
                     b.name,
                     "en",
                     {
-                        sensitivity:
-                            "base"
+                        sensitivity: "base"
                     }
                 )
         );
@@ -1300,18 +1166,23 @@ async function loadGames() {
         displayPlatformMenu();
 
 
-        displayFilteredGames();
+        /*
+         * Do not display games
+         * on the Home page.
+         */
+        statusElement.textContent = "";
 
 
     } catch (error) {
 
-        console.error(
-            error
-        );
+        console.error(error);
 
 
         statusElement.textContent =
             "";
+
+
+        gameList.hidden = false;
 
 
         gameList.innerHTML = `
@@ -1341,20 +1212,6 @@ searchInput.addEventListener(
 
 
 /*
- * Search button.
- */
-searchButton.addEventListener(
-    "click",
-    event => {
-
-        event.stopPropagation();
-
-        toggleSearch();
-    }
-);
-
-
-/*
  * Menu events.
  */
 menuButton.addEventListener(
@@ -1372,6 +1229,15 @@ menuClose.addEventListener(
 menuOverlay.addEventListener(
     "click",
     closeMenu
+);
+
+
+/*
+ * All Games.
+ */
+allGamesButton.addEventListener(
+    "click",
+    showAllGames
 );
 
 
