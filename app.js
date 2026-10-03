@@ -1,36 +1,35 @@
 /*
-
-GOOGLE SHEETS
-
-This is your Google Sheets file.
-
-There is no need to modify or remove
-
-merged cells.
-*/
-
+ * GOOGLE SHEETS
+ *
+ * This is your Google Sheets file.
+ *
+ * There is no need to modify or remove
+ * merged cells.
+ */
 
 const SHEET_URL =
-"https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
+    "https://docs.google.com/spreadsheets/d/1CO7dH7mbj9sl67g4e94wczHESp0NAsOa7_chKKii9OA/export?format=csv";
+
 
 const gameList = document.getElementById("game-list");
 const searchInput = document.getElementById("search");
 const statusElement = document.getElementById("status");
 
 const menuButton =
-document.getElementById("menu-button");
+    document.getElementById("menu-button");
 
 const menuClose =
-document.getElementById("menu-close");
+    document.getElementById("menu-close");
 
 const sideMenu =
-document.getElementById("side-menu");
+    document.getElementById("side-menu");
 
 const menuOverlay =
-document.getElementById("menu-overlay");
+    document.getElementById("menu-overlay");
 
 const platformList =
-document.getElementById("platform-list");
+    document.getElementById("platform-list");
+
 
 let games = [];
 
@@ -38,1119 +37,1100 @@ let selectedPlatform = "";
 
 let selectedCategory = "";
 
-/*
 
-Normalize column names.
-*/
+/*
+ * Normalize column names.
+ */
 function normalizeHeader(value) {
 
-return value
-.replace(/^\uFEFF/, "")
-.trim()
-.toUpperCase()
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g, "");
+    return value
+        .replace(/^\uFEFF/, "")
+        .trim()
+        .toUpperCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 
 /*
-
-Normalize text for game comparison.
-*/
+ * Normalize text for game comparison.
+ */
 function normalizeText(value) {
 
-return String(value || "")
-.trim()
-.toLowerCase()
-.normalize("NFD")
-.replace(/[\u0300-\u036f]/g, "");
+    return String(value || "")
+        .trim()
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "");
 }
 
 
 /*
-
-Convert the game name into an identifier
-
-that can be used in the URL.
-*/
+ * Convert the game name into an identifier
+ * that can be used in the URL.
+ */
 function createSlug(name) {
 
-return normalizeText(name)
-.replace(/[^a-z0-9]+/g, "-")
-.replace(/^-+|-+$/g, "");
+    return normalizeText(name)
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-+|-+$/g, "");
 }
 
 
 /*
-
-Full CSV parser.
-*/
+ * Full CSV parser.
+ */
 function parseCSV(csv) {
 
-const rows = [];
+    const rows = [];
 
-let row = [];
-let field = "";
-let insideQuotes = false;
+    let row = [];
+    let field = "";
+    let insideQuotes = false;
 
-for (let i = 0; i < csv.length; i++) {
+    for (let i = 0; i < csv.length; i++) {
 
-const char = csv[i];  
+        const char = csv[i];
 
- if (char === '"') {  
+        if (char === '"') {
 
-     if (insideQuotes && csv[i + 1] === '"') {  
+            if (insideQuotes && csv[i + 1] === '"') {
 
-         field += '"';  
-         i++;  
+                field += '"';
+                i++;
 
-     } else {  
+            } else {
 
-         insideQuotes = !insideQuotes;  
-     }  
+                insideQuotes = !insideQuotes;
+            }
 
-     continue;  
- }  
-
-
- if (char === "," && !insideQuotes) {  
-
-     row.push(field);  
-     field = "";  
-
-     continue;  
- }  
+            continue;
+        }
 
 
- if (  
-     (char === "\n" || char === "\r") &&  
-     !insideQuotes  
- ) {  
+        if (char === "," && !insideQuotes) {
 
-     if (  
-         char === "\r" &&  
-         csv[i + 1] === "\n"  
-     ) {  
-         i++;  
-     }  
+            row.push(field);
+            field = "";
 
-     row.push(field);  
-     field = "";  
-
-     if (  
-         row.some(  
-             value => value.trim() !== ""  
-         )  
-     ) {  
-         rows.push(row);  
-     }  
-
-     row = [];  
-
-     continue;  
- }  
+            continue;
+        }
 
 
- field += char;
+        if (
+            (char === "\n" || char === "\r") &&
+            !insideQuotes
+        ) {
 
-}
+            if (
+                char === "\r" &&
+                csv[i + 1] === "\n"
+            ) {
+                i++;
+            }
 
-if (
-field.length > 0 ||
-row.length > 0
-) {
+            row.push(field);
+            field = "";
 
-row.push(field);  
+            if (
+                row.some(
+                    value => value.trim() !== ""
+                )
+            ) {
+                rows.push(row);
+            }
 
- if (  
-     row.some(  
-         value => value.trim() !== ""  
-     )  
- ) {  
-     rows.push(row);  
- }
+            row = [];
 
-}
+            continue;
+        }
 
-if (rows.length === 0) {
-return [];
-}
 
-const headers = rows.shift().map(
-normalizeHeader
-);
+        field += char;
+    }
 
-return rows.map(values => {
 
-const rowObject = {};  
+    if (
+        field.length > 0 ||
+        row.length > 0
+    ) {
 
- headers.forEach(  
-     (header, index) => {  
+        row.push(field);
 
-         rowObject[header] =  
-             (values[index] || "").trim();  
+        if (
+            row.some(
+                value => value.trim() !== ""
+            )
+        ) {
+            rows.push(row);
+        }
+    }
 
-     }  
- );  
 
- return rowObject;
+    if (rows.length === 0) {
+        return [];
+    }
 
-});
+
+    const headers = rows.shift().map(
+        normalizeHeader
+    );
+
+
+    return rows.map(values => {
+
+        const rowObject = {};
+
+        headers.forEach(
+            (header, index) => {
+
+                rowObject[header] =
+                    (values[index] || "").trim();
+
+            }
+        );
+
+        return rowObject;
+    });
 }
 
 
 /*
-
-Find a column.
-*/
+ * Find a column.
+ */
 function getColumn(row, possibleNames) {
 
-for (const name of possibleNames) {
+    for (const name of possibleNames) {
 
-const normalizedName =  
-     normalizeHeader(name);  
+        const normalizedName =
+            normalizeHeader(name);
 
- if (  
-     Object.prototype.hasOwnProperty.call(  
-         row,  
-         normalizedName  
-     )  
- ) {  
+        if (
+            Object.prototype.hasOwnProperty.call(
+                row,
+                normalizedName
+            )
+        ) {
 
-     return row[normalizedName];  
- }
+            return row[normalizedName];
+        }
+    }
 
-}
-
-return "";
+    return "";
 }
 
 
 /*
-
-Convert CSV rows.
-*/
+ * Convert CSV rows.
+ */
 function processRows(rows) {
 
-let currentGame = "";
-let currentYear = "";
+    let currentGame = "";
+    let currentYear = "";
 
-const result = [];
-
-for (const row of rows) {
-
-const gameValue =  
-     getColumn(row, [  
-         "GAME",  
-         "GAME NAME",  
-         "NAME",  
-         "JUEGO"  
-     ]).trim();  
+    const result = [];
 
 
- const yearValue =  
-     getColumn(row, [  
-         "YEAR",  
-         "ANO",  
-         "AÑO"  
-     ]).trim();  
+    for (const row of rows) {
+
+        const gameValue =
+            getColumn(row, [
+                "GAME",
+                "GAME NAME",
+                "NAME",
+                "JUEGO"
+            ]).trim();
 
 
- if (gameValue) {  
-     currentGame = gameValue;  
- }  
+        const yearValue =
+            getColumn(row, [
+                "YEAR",
+                "ANO",
+                "AÑO"
+            ]).trim();
 
 
- if (yearValue) {  
-     currentYear = yearValue;  
- }  
+        if (gameValue) {
+            currentGame = gameValue;
+        }
 
 
- /*  
-  * Platform.  
-  */  
- const platform =  
-     getColumn(row, [  
-         "PLATFORM",  
-         "PLATAFORM",  
-         "PLATAFORMA"  
-     ]).trim();  
+        if (yearValue) {
+            currentYear = yearValue;
+        }
 
 
- /*  
-  * Port-specific data.  
-  */  
- const project =  
-     getColumn(row, [  
-         "PROJECT",  
-         "PROYECTO"  
-     ]);  
+        /*
+         * Platform.
+         */
+        const platform =
+            getColumn(row, [
+                "PLATFORM",
+                "PLATAFORM",
+                "PLATAFORMA"
+            ]).trim();
 
 
- const link =  
-     getColumn(row, [  
-         "LINK",  
-         "PROJECT LINK",  
-         "ENLACE"  
-     ]);  
+        /*
+         * Port-specific data.
+         */
+        const project =
+            getColumn(row, [
+                "PROJECT",
+                "PROYECTO"
+            ]);
 
 
- const url =  
-     getColumn(row, [  
-         "URL"  
-     ]);  
+        const link =
+            getColumn(row, [
+                "LINK",
+                "PROJECT LINK",
+                "ENLACE"
+            ]);
 
 
- const developer =  
-     getColumn(row, [  
-         "DEVELOPER",  
-         "DEVELOPER/PUBLISHER",  
-         "DESARROLLADOR"  
-     ]);  
+        const url =
+            getColumn(row, [
+                "URL"
+            ]);
 
 
- const version =  
-     getColumn(row, [  
-         "VERSION",  
-         "VERSIÓN"  
-     ]);  
+        const developer =
+            getColumn(row, [
+                "DEVELOPER",
+                "DEVELOPER/PUBLISHER",
+                "DESARROLLADOR"
+            ]);
 
 
- const controller =  
-     getColumn(row, [  
-         "CONTROLLER SUPPORT",  
-         "CONTROLLER",  
-         "GAMEPAD",  
-         "MANDO"  
-     ]);  
+        const version =
+            getColumn(row, [
+                "VERSION",
+                "VERSIÓN"
+            ]);
 
 
- const files =  
-     getColumn(row, [  
-         "NEEDS GAME FILES?",  
-         "NEEDS GAME FILES",  
-         "GAME FILES",  
-         "NECESITA ARCHIVOS"  
-     ]);  
+        const controller =
+            getColumn(row, [
+                "CONTROLLER SUPPORT",
+                "CONTROLLER",
+                "GAMEPAD",
+                "MANDO"
+            ]);
 
 
- const works =  
-     getColumn(row, [  
-         "WORKS?",  
-         "WORKS",  
-         "FUNCIONA"  
-     ]);  
+        const files =
+            getColumn(row, [
+                "NEEDS GAME FILES?",
+                "NEEDS GAME FILES",
+                "GAME FILES",
+                "NECESITA ARCHIVOS"
+            ]);
 
 
- const lastUpdate =  
-     getColumn(row, [  
-         "LAST UPDATE",  
-         "LAST UPDATED",  
-         "ÚLTIMA ACTUALIZACIÓN"  
-     ]);  
+        const works =
+            getColumn(row, [
+                "WORKS?",
+                "WORKS",
+                "FUNCIONA"
+            ]);
 
 
- const notes =  
-     getColumn(row, [  
-         "NOTES",  
-         "NOTE",  
-         "NOTAS"  
-     ]);  
+        const lastUpdate =
+            getColumn(row, [
+                "LAST UPDATE",
+                "LAST UPDATED",
+                "ÚLTIMA ACTUALIZACIÓN"
+            ]);
 
 
- const hasPortData =  
-     project ||  
-     link ||  
-     url ||  
-     developer ||  
-     version ||  
-     controller ||  
-     files ||  
-     works ||  
-     lastUpdate ||  
-     notes;  
+        const notes =
+            getColumn(row, [
+                "NOTES",
+                "NOTE",
+                "NOTAS"
+            ]);
 
 
- if (  
-     !currentGame ||  
-     !hasPortData  
- ) {  
-     continue;  
- }  
+        const hasPortData =
+            project ||
+            link ||
+            url ||
+            developer ||
+            version ||
+            controller ||
+            files ||
+            works ||
+            lastUpdate ||
+            notes;
 
 
- result.push({  
+        if (
+            !currentGame ||
+            !hasPortData
+        ) {
+            continue;
+        }
 
-     game: currentGame,  
 
-     year: currentYear,  
+        result.push({
 
-     platform: platform,  
+            game: currentGame,
 
-     project: project.trim(),  
+            year: currentYear,
 
-     link: link.trim(),  
+            platform: platform,
 
-     url: url.trim(),  
+            project: project.trim(),
 
-     developer: developer.trim(),  
+            link: link.trim(),
 
-     version: version.trim(),  
+            url: url.trim(),
 
-     controller: controller.trim(),  
+            developer: developer.trim(),
 
-     files: files.trim(),  
+            version: version.trim(),
 
-     works: works.trim(),  
+            controller: controller.trim(),
 
-     lastUpdate: lastUpdate.trim(),  
+            files: files.trim(),
 
-     notes: notes.trim()  
+            works: works.trim(),
 
- });
+            lastUpdate: lastUpdate.trim(),
 
-}
+            notes: notes.trim()
 
-return result;
+        });
+    }
+
+
+    return result;
 }
 
 
 /*
-
-Group ports by game.
-*/
+ * Group ports by game.
+ */
 function groupGames(rows) {
 
-const grouped = new Map();
-
-for (const port of rows) {
-
-const key =  
-     normalizeText(port.game);  
+    const grouped = new Map();
 
 
- if (!grouped.has(key)) {  
+    for (const port of rows) {
 
-     grouped.set(  
-         key,  
-         {  
-             name: port.game,  
-             year: port.year,  
-             slug: createSlug(port.game),  
-             ports: [],  
-             platforms: new Set()  
-         }  
-     );  
- }  
+        const key =
+            normalizeText(port.game);
 
 
- const game =  
-     grouped.get(key);  
+        if (!grouped.has(key)) {
+
+            grouped.set(
+                key,
+                {
+                    name: port.game,
+                    year: port.year,
+                    slug: createSlug(port.game),
+                    ports: [],
+                    platforms: new Set()
+                }
+            );
+        }
 
 
- if (  
-     !game.year &&  
-     port.year  
- ) {  
-     game.year = port.year;  
- }  
+        const game =
+            grouped.get(key);
 
 
- if (port.platform) {  
+        if (
+            !game.year &&
+            port.year
+        ) {
+            game.year = port.year;
+        }
 
-     game.platforms.add(  
-         port.platform  
-     );  
- }  
+
+        if (port.platform) {
+
+            game.platforms.add(
+                port.platform
+            );
+        }
 
 
- game.ports.push(port);
+        game.ports.push(port);
+    }
 
-}
 
-return Array.from(
-grouped.values()
-).map(game => {
+    return Array.from(
+        grouped.values()
+    ).map(game => {
 
-game.platforms =  
-     Array.from(  
-         game.platforms  
-     );  
+        game.platforms =
+            Array.from(
+                game.platforms
+            );
 
- return game;
-
-});
+        return game;
+    });
 }
 
 
 /*
-
-Check if a game has a Dual Screen project.
-*/
+ * Check if a game has a Dual Screen project.
+ */
 function isDualScreen(game) {
 
-return game.ports.some(
-port =>
-normalizeText(port.project)
-.includes("dual screen")
-);
+    return game.ports.some(
+        port =>
+            normalizeText(port.project)
+                .includes("dual screen")
+    );
 }
 
 
 /*
-
-Open menu.
-*/
+ * Open menu.
+ */
 function openMenu() {
 
-sideMenu.classList.add("open");
+    sideMenu.classList.add("open");
 
-menuOverlay.classList.add("open");
+    menuOverlay.classList.add("open");
 }
 
 
 /*
-
-Close menu.
-*/
+ * Close menu.
+ */
 function closeMenu() {
 
-sideMenu.classList.remove("open");
+    sideMenu.classList.remove("open");
 
-menuOverlay.classList.remove("open");
+    menuOverlay.classList.remove("open");
 }
 
 
 /*
-
-Create category menu.
-*/
+ * Create category menu.
+ */
 function displayPlatformMenu() {
 
-platformList.innerHTML = "";
-
-/*
-
-All Categories.
-*/
-const allButton =
-document.createElement("button");
+    platformList.innerHTML = "";
 
 
-allButton.type =
-"button";
+    /*
+     * All Categories.
+     */
+    const allButton =
+        document.createElement("button");
 
-allButton.className =
-"platform-button";
+    allButton.type =
+        "button";
 
-allButton.textContent =
-"All Categories";
+    allButton.className =
+        "platform-button";
 
-allButton.addEventListener(
-"click",
-() => {
+    allButton.textContent =
+        "All Categories";
 
-selectedPlatform = "";  
-     selectedCategory = "";  
+    allButton.addEventListener(
+        "click",
+        () => {
 
-     displayFilteredGames();  
+            selectedPlatform = "";
+            selectedCategory = "";
 
-     closeMenu();  
- }
+            displayFilteredGames();
 
-);
+            closeMenu();
+        }
+    );
 
-platformList.appendChild(
-allButton
-);
-
-/*
-
-Multi-game Apps.
-*/
-const multiGameButton =
-document.createElement("button");
+    platformList.appendChild(
+        allButton
+    );
 
 
-multiGameButton.type =
-"button";
+    /*
+     * Multi-game Apps.
+     */
+    const multiGameButton =
+        document.createElement("button");
 
-multiGameButton.className =
-"platform-button";
+    multiGameButton.type =
+        "button";
 
-multiGameButton.textContent =
-"Multi-game Apps";
+    multiGameButton.className =
+        "platform-button";
 
-multiGameButton.addEventListener(
-"click",
-() => {
+    multiGameButton.textContent =
+        "Multi-game Apps";
 
-selectedPlatform = "";  
-     selectedCategory = "multi-game-apps";  
+    multiGameButton.addEventListener(
+        "click",
+        () => {
 
-     displayFilteredGames();  
+            selectedPlatform = "";
+            selectedCategory = "multi-game-apps";
 
-     closeMenu();  
- }
+            displayFilteredGames();
 
-);
+            closeMenu();
+        }
+    );
 
-platformList.appendChild(
-multiGameButton
-);
-
-/*
-
-Dual Screen.
-*/
-const dualScreenButton =
-document.createElement("button");
+    platformList.appendChild(
+        multiGameButton
+    );
 
 
-dualScreenButton.type =
-"button";
+    /*
+     * Dual Screen.
+     */
+    const dualScreenButton =
+        document.createElement("button");
 
-dualScreenButton.className =
-"platform-button";
+    dualScreenButton.type =
+        "button";
 
-dualScreenButton.textContent =
-"Dual Screen";
+    dualScreenButton.className =
+        "platform-button";
 
-dualScreenButton.addEventListener(
-"click",
-() => {
+    dualScreenButton.textContent =
+        "Dual Screen";
 
-selectedPlatform = "";  
-     selectedCategory = "dual-screen";  
+    dualScreenButton.addEventListener(
+        "click",
+        () => {
 
-     displayFilteredGames();  
+            selectedPlatform = "";
+            selectedCategory = "dual-screen";
 
-     closeMenu();  
- }
+            displayFilteredGames();
 
-);
+            closeMenu();
+        }
+    );
 
-platformList.appendChild(
-dualScreenButton
-);
-
-/*
-
-Nintendo.
-*/
-addMenuSeparator(
-"Nintendo"
-);
+    platformList.appendChild(
+        dualScreenButton
+    );
 
 
-addPlatformButton(
-"NES"
-);
-
-addPlatformButton(
-"Super Nintendo"
-);
-
-addPlatformButton(
-"Nintendo 64"
-);
-
-addPlatformButton(
-"GameCube / Wii"
-);
-
-addPlatformButton(
-"Gameboy / Gameboy Color"
-);
-
-addPlatformButton(
-"Gameboy Advance"
-);
-
-addPlatformButton(
-"Nintendo DS"
-);
-
-addPlatformButton(
-"Nintendo 3DS"
-);
-
-/*
-
-PlayStation.
-*/
-addMenuSeparator(
-"PlayStation"
-);
+    /*
+     * Nintendo.
+     */
+    addMenuSeparator(
+        "Nintendo"
+    );
 
 
-addPlatformButton(
-"Playstation"
-);
+    addPlatformButton(
+        "NES"
+    );
 
-addPlatformButton(
-"Playstation Portable"
-);
+    addPlatformButton(
+        "Super Nintendo"
+    );
 
-/*
+    addPlatformButton(
+        "Nintendo 64"
+    );
 
-Xbox.
-*/
-addMenuSeparator(
-"Xbox"
-);
+    addPlatformButton(
+        "GameCube / Wii"
+    );
+
+    addPlatformButton(
+        "Gameboy / Gameboy Color"
+    );
+
+    addPlatformButton(
+        "Gameboy Advance"
+    );
+
+    addPlatformButton(
+        "Nintendo DS"
+    );
+
+    addPlatformButton(
+        "Nintendo 3DS"
+    );
 
 
-addPlatformButton(
-"Xbox"
-);
-
-addPlatformButton(
-"Xbox 360"
-);
-
-/*
-
-Others.
-*/
-addMenuSeparator(
-"Others"
-);
+    /*
+     * PlayStation.
+     */
+    addMenuSeparator(
+        "PlayStation"
+    );
 
 
-addPlatformButton(
-"Others"
-);
+    addPlatformButton(
+        "Playstation"
+    );
+
+    addPlatformButton(
+        "Playstation Portable"
+    );
+
+
+    /*
+     * Xbox.
+     */
+    addMenuSeparator(
+        "Xbox"
+    );
+
+
+    addPlatformButton(
+        "Xbox"
+    );
+
+    addPlatformButton(
+        "Xbox 360"
+    );
+
+
+    /*
+     * Others.
+     */
+    addMenuSeparator(
+        "Others"
+    );
+
+
+    addPlatformButton(
+        "Others"
+    );
 }
 
 
 /*
-
-Add a menu separator/title.
-*/
+ * Add a menu separator/title.
+ */
 function addMenuSeparator(title) {
 
-const separator =
-document.createElement("div");
+    const separator =
+        document.createElement("div");
 
-separator.className =
-"menu-separator";
+    separator.className =
+        "menu-separator";
 
-separator.textContent =
-"── " + title + " ──";
+    separator.textContent =
+        "── " + title + " ──";
 
-platformList.appendChild(
-separator
-);
+    platformList.appendChild(
+        separator
+    );
 }
 
 
 /*
-
-Add a platform button.
-*/
+ * Add a platform button.
+ */
 function addPlatformButton(platform) {
 
-const button =
-document.createElement("button");
+    const button =
+        document.createElement("button");
 
-button.type =
-"button";
+    button.type =
+        "button";
 
-button.className =
-"platform-button";
+    button.className =
+        "platform-button";
 
-button.textContent =
-platform;
+    button.textContent =
+        platform;
 
-button.addEventListener(
-"click",
-() => {
+    button.addEventListener(
+        "click",
+        () => {
 
-selectedPlatform =  
-         platform;  
+            selectedPlatform =
+                platform;
 
-     selectedCategory = "";  
+            selectedCategory = "";
 
-     displayFilteredGames();  
+            displayFilteredGames();
 
-     closeMenu();  
- }
+            closeMenu();
+        }
+    );
 
-);
-
-platformList.appendChild(
-button
-);
+    platformList.appendChild(
+        button
+    );
 }
 
 
 /*
-
-Display games.
-*/
+ * Display games.
+ */
 function displayGames(list) {
 
-gameList.innerHTML = "";
-
-if (list.length === 0) {
-
-gameList.innerHTML = `  
-     <div class="no-results">  
-         No games found.  
-     </div>  
- `;  
-
- statusElement.textContent =  
-     "0 games";  
-
- return;
-
-}
-
-statusElement.textContent =
-${list.length} game${list.length !== 1 ? "s" : ""};
-
-const fragment =
-document.createDocumentFragment();
-
-for (const game of list) {
-
-const element =  
-     document.createElement("a");  
+    gameList.innerHTML = "";
 
 
- element.className =  
-     "game";  
+    if (list.length === 0) {
+
+        gameList.innerHTML = `
+            <div class="no-results">
+                No games found.
+            </div>
+        `;
+
+        statusElement.textContent =
+            "0 games";
+
+        return;
+    }
 
 
- element.href =  
-     `game.html?game=${encodeURIComponent(game.slug)}`;  
+    statusElement.textContent =
+        `${list.length} game${list.length !== 1 ? "s" : ""}`;
 
 
- const name =  
-     document.createElement("h2");  
+    const fragment =
+        document.createDocumentFragment();
 
 
- name.className =  
-     "game-name";  
+    for (const game of list) {
+
+        const element =
+            document.createElement("a");
 
 
- name.textContent =  
-     game.name;  
+        element.className =
+            "game";
 
 
- const info =  
-     document.createElement("div");  
+        element.href =
+            `game.html?game=${encodeURIComponent(game.slug)}`;
 
 
- info.className =  
-     "game-info";  
+        const name =
+            document.createElement("h2");
 
 
- if (game.year) {  
-
-     const span =  
-         document.createElement("span");  
-
-     span.textContent =  
-         game.year;  
-
-     info.appendChild(span);  
- }  
+        name.className =
+            "game-name";
 
 
- const portCount =  
-     document.createElement("span");  
+        name.textContent =
+            game.name;
 
 
- portCount.textContent =  
-     `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;  
+        const info =
+            document.createElement("div");
 
 
- info.appendChild(  
-     portCount  
- );  
+        info.className =
+            "game-info";
 
 
- element.appendChild(  
-     name  
- );  
+        if (game.year) {
 
- element.appendChild(  
-     info  
- );  
+            const span =
+                document.createElement("span");
+
+            span.textContent =
+                game.year;
+
+            info.appendChild(span);
+        }
 
 
- fragment.appendChild(  
-     element  
- );
+        const portCount =
+            document.createElement("span");
 
-}
 
-gameList.appendChild(
-fragment
-);
+        portCount.textContent =
+            `${game.ports.length} port${game.ports.length !== 1 ? "s" : ""}`;
+
+
+        info.appendChild(
+            portCount
+        );
+
+
+        element.appendChild(
+            name
+        );
+
+        element.appendChild(
+            info
+        );
+
+
+        fragment.appendChild(
+            element
+        );
+    }
+
+
+    gameList.appendChild(
+        fragment
+    );
 }
 
 
 /*
-
-Filter games by search and platform.
-*/
+ * Filter games by search and platform.
+ */
 function displayFilteredGames() {
 
-const query =
-normalizeText(
-searchInput.value
-);
-
-const filtered =
-games.filter(game => {
-
-/*  
-      * Hide Multi-game Apps from  
-      * All Categories.  
-      *  
-      * They are shown only when  
-      * the Multi-game Apps category  
-      * is selected.  
-      */  
-     if (  
-         selectedCategory !== "multi-game-apps" &&  
-         game.platforms.some(  
-             platform =>  
-                 normalizeText(platform) ===  
-                 "multi-game apps"  
-         )  
-     ) {  
-
-         return false;  
-     }  
+    const query =
+        normalizeText(
+            searchInput.value
+        );
 
 
-     /*  
-      * Multi-game Apps category.  
-      */  
-     if (  
-         selectedCategory === "multi-game-apps" &&  
-         !game.platforms.some(  
-             platform =>  
-                 normalizeText(platform) ===  
-                 "multi-game apps"  
-         )  
-     ) {  
+    const filtered =
+        games.filter(game => {
 
-         return false;  
-     }  
+            /*
+             * Hide Multi-game Apps from
+             * All Categories.
+             *
+             * They are shown only when
+             * the Multi-game Apps category
+             * is selected.
+             */
+            if (
+                selectedCategory !== "multi-game-apps" &&
+                game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        "multi-game apps"
+                )
+            ) {
 
-
-     /*  
-      * Dual Screen category.  
-      */  
-     if (  
-         selectedCategory === "dual-screen" &&  
-         !isDualScreen(game)  
-     ) {  
-
-         return false;  
-     }  
+                return false;
+            }
 
 
-     /*  
-      * Platform filter.  
-      */  
-     if (  
-         selectedPlatform &&  
-         !game.platforms.some(  
-             platform =>  
-                 normalizeText(platform) ===  
-                 normalizeText(selectedPlatform)  
-         )  
-     ) {  
+            /*
+             * Multi-game Apps category.
+             */
+            if (
+                selectedCategory === "multi-game-apps" &&
+                !game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        "multi-game apps"
+                )
+            ) {
 
-         return false;  
-     }  
-
-
-     /*  
-      * Search filter.  
-      */  
-     if (!query) {  
-         return true;  
-     }  
+                return false;
+            }
 
 
-     const searchableText = [  
+            /*
+             * Dual Screen category.
+             */
+            if (
+                selectedCategory === "dual-screen" &&
+                !isDualScreen(game)
+            ) {
 
-         game.name,  
-         game.year,  
-
-         ...game.ports.map(port => [  
-
-             port.project,  
-             port.developer,  
-             port.version,  
-             port.notes  
-
-         ].join(" "))  
-
-     ]  
-         .join(" ")  
-         .toLowerCase();  
+                return false;
+            }
 
 
-     return normalizeText(  
-         searchableText  
-     ).includes(query);  
- });
+            /*
+             * Platform filter.
+             */
+            if (
+                selectedPlatform &&
+                !game.platforms.some(
+                    platform =>
+                        normalizeText(platform) ===
+                        normalizeText(selectedPlatform)
+                )
+            ) {
 
-displayGames(
-filtered
-);
+                return false;
+            }
+
+
+            /*
+             * Search filter.
+             */
+            if (!query) {
+                return true;
+            }
+
+
+            const searchableText = [
+
+                game.name,
+                game.year,
+
+                ...game.ports.map(port => [
+
+                    port.project,
+                    port.developer,
+                    port.version,
+                    port.notes
+
+                ].join(" "))
+
+            ]
+                .join(" ")
+                .toLowerCase();
+
+
+            return normalizeText(
+                searchableText
+            ).includes(query);
+        });
+
+
+    displayGames(
+        filtered
+    );
 }
 
 
 /*
-
-Search.
-*/
+ * Search.
+ */
 function searchGames() {
 
-displayFilteredGames();
+    displayFilteredGames();
 }
 
 
 /*
-
-Load Google Sheets.
-*/
+ * Load Google Sheets.
+ */
 async function loadGames() {
 
-try {
+    try {
 
-statusElement.textContent =  
-     "Loading games...";  
-
-
- const response =  
-     await fetch(SHEET_URL);  
+        statusElement.textContent =
+            "Loading games...";
 
 
- if (!response.ok) {  
-
-     throw new Error(  
-         `HTTP error ${response.status}`  
-     );  
- }  
+        const response =
+            await fetch(SHEET_URL);
 
 
- const csv =  
-     await response.text();  
+        if (!response.ok) {
+
+            throw new Error(
+                `HTTP error ${response.status}`
+            );
+        }
 
 
- const rows =  
-     parseCSV(csv);  
+        const csv =
+            await response.text();
 
 
- if (rows.length === 0) {  
-
-     throw new Error(  
-         "The sheet contains no data."  
-     );  
- }  
+        const rows =
+            parseCSV(csv);
 
 
- const processedRows =  
-     processRows(rows);  
+        if (rows.length === 0) {
+
+            throw new Error(
+                "The sheet contains no data."
+            );
+        }
 
 
- games =  
-     groupGames(processedRows);  
+        const processedRows =
+            processRows(rows);
 
 
- /*  
-  * Alphabetical order.  
-  */  
- games.sort(  
-     (a, b) =>  
-         a.name.localeCompare(  
-             b.name,  
-             "en",  
-             {  
-                 sensitivity: "base"  
-             }  
-         )  
- );  
+        games =
+            groupGames(processedRows);
 
 
- /*  
-  * Create Categories menu.  
-  */  
- displayPlatformMenu();  
+        /*
+         * Alphabetical order.
+         */
+        games.sort(
+            (a, b) =>
+                a.name.localeCompare(
+                    b.name,
+                    "en",
+                    {
+                        sensitivity: "base"
+                    }
+                )
+        );
 
 
- displayFilteredGames();
-
-} catch (error) {
-
-console.error(error);  
-
-
- statusElement.textContent =  
-     "";  
+        /*
+         * Create Categories menu.
+         */
+        displayPlatformMenu();
 
 
- gameList.innerHTML = `  
-     <div class="error">  
+        displayFilteredGames();
 
-         <strong>  
-             Could not load the games.  
-         </strong>  
 
-         <br><br>  
+    } catch (error) {
 
-         ${error.message}  
+        console.error(error);
 
-     </div>  
- `;
 
-}
+        statusElement.textContent =
+            "";
+
+
+        gameList.innerHTML = `
+            <div class="error">
+
+                <strong>
+                    Could not load the games.
+                </strong>
+
+                <br><br>
+
+                ${error.message}
+
+            </div>
+        `;
+    }
 }
 
 
 /*
-
-Search while typing.
-*/
+ * Search while typing.
+ */
 searchInput.addEventListener(
-"input",
-searchGames
+    "input",
+    searchGames
 );
 
 
 /*
-
-Menu events.
-*/
+ * Menu events.
+ */
 menuButton.addEventListener(
-"click",
-openMenu
+    "click",
+    openMenu
 );
 
 
 menuClose.addEventListener(
-"click",
-closeMenu
+    "click",
+    closeMenu
 );
+
 
 menuOverlay.addEventListener(
-"click",
-closeMenu
+    "click",
+    closeMenu
 );
 
-/*
 
-Start.
-*/
+/*
+ * Start.
+ */
 loadGames();
