@@ -14,25 +14,13 @@
 
 <header>
 
-    <button
-        id="menu-button"
-        type="button"
-        aria-label="Open menu"
-    >
+    <button id="menu-button" type="button">
         ☰
     </button>
 
-    <h1>
-        Community Android Ports
-    </h1>
+    <h1>Community Android Ports</h1>
 
-    <button
-        id="search-button"
-        type="button"
-        aria-label="Open search"
-    >
-        🔍
-    </button>
+    <p>List of Native Android ports made by the Community</p>
 
 </header>
 
@@ -42,12 +30,18 @@
 
 <nav id="side-menu">
 
-    <button
-        id="menu-close"
-        type="button"
-        aria-label="Close menu"
-    >
+    <button id="menu-close" type="button">
         ×
+    </button>
+
+    <h2>Games</h2>
+
+    <button
+        id="all-games-button"
+        type="button"
+        class="platform-button"
+    >
+        All Games
     </button>
 
     <h2>Categories</h2>
@@ -59,26 +53,22 @@
 
 <main>
 
-    <div
-        id="search-container"
-        class="search-container"
-        hidden
-    >
+    <div class="search-container">
+
         <input
             type="text"
             id="search"
             placeholder="Search game..."
             autocomplete="off"
         >
+
     </div>
 
 
-    <div id="status">
-        Loading games...
-    </div>
+    <div id="status"></div>
 
 
-    <div id="game-list"></div>
+    <div id="game-list" hidden></div>
 
 
     <p class="game-files-link">
